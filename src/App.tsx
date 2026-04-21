@@ -990,8 +990,8 @@ function App() {
     <div className={`workspace-shell role-${activeRole}`}>
       <aside className="workspace-sidebar">
         <div className="brand-block">
-          <p>GUC project portfolio</p>
-          <h1>MS2 prototype</h1>
+          <p>BridgeBoard</p>
+          <h1>Portfolio</h1>
         </div>
 
         <div className="session-card">
@@ -1022,7 +1022,7 @@ function App() {
         </nav>
 
         <button type="button" className="ghost-button wide-button" onClick={handleLogout}>
-          Switch Account
+          Logout
         </button>
       </aside>
 

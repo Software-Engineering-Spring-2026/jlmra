@@ -36,6 +36,11 @@ export function LoginScreen({
   return (
     <div className="login-shell">
       <section className="login-card">
+        <div className="brand-block brand-block-login">
+          <p>BridgeBoard</p>
+          <h1>Portfolio</h1>
+        </div>
+
         <div className="login-card-head">
           <p>Sign in</p>
           <h2>Choose an account</h2>

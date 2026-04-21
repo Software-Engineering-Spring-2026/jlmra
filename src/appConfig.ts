@@ -3,6 +3,7 @@ import { type Role } from './mockData';
 export type WorkspacePage =
   | 'dashboard'
   | 'profile'
+  | 'portfolio'
   | 'projects'
   | 'internships'
   | 'applicants'
@@ -38,7 +39,7 @@ export const demoAccounts: DemoAccount[] = [
     email: 'lina.hassan@student.guc.edu.eg',
     password: 'Student123',
     otp: '482190',
-    landingPage: 'profile',
+    landingPage: 'portfolio',
   },
   {
     id: 'demo-employer',
@@ -77,8 +78,8 @@ export const pagesByRole: Record<Role, PageMeta[]> = {
       description: 'Your student home page with the most important project and internship updates.',
     },
     {
-      id: 'profile',
-      label: 'My Profile',
+      id: 'portfolio',
+      label: 'My Portfolio',
       description: 'Your public-facing portfolio profile and visibility settings.',
     },
     {

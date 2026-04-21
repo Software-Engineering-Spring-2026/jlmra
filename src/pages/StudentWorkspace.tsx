@@ -153,11 +153,11 @@ export function StudentWorkspace({
           </div>
         </div>
       );
-    case 'profile':
+    case 'portfolio':
       return (
         <div className="page-stack">
           <PageHeader
-            eyebrow="Student profile"
+            eyebrow="Student portfolio"
             title={studentProfile.name}
             description="This page now focuses only on the student identity, public portfolio basics, and featured work."
             action={
