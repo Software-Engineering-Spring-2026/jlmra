@@ -635,8 +635,8 @@ export const initialUsers: UserAccount[] = [
   },
   {
     id: 'user-4',
-    name: 'Nor Mohamed',
-    email: 'nor.mohamed@guc.edu.eg',
+    name: 'Nour Mohmed',
+    email: 'nour.mohmed@guc.edu.eg',
     role: 'admin',
     status: 'Active',
   },
@@ -842,7 +842,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
     },
     {
       id: 'employer-conversation-2',
-      name: 'Nor Mohamed',
+      name: 'Nour Mohmed',
       role: 'Administrator',
       subtitle: 'Company verification',
       unread: 0,
@@ -889,7 +889,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
     },
     {
       id: 'instructor-conversation-2',
-      name: 'Nor Mohamed',
+      name: 'Nour Mohmed',
       role: 'Administrator',
       subtitle: 'Course link request',
       unread: 0,

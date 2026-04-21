@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders the login account chooser', () => {
+test('renders the student dashboard by default', () => {
   render(<App />);
-  expect(screen.getByRole('heading', { name: /choose an account/i })).toBeInTheDocument();
+  expect(screen.getByText(/welcome back, lina/i)).toBeInTheDocument();
 });

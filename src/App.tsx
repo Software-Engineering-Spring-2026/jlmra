@@ -43,6 +43,8 @@ type InternshipDraft = {
   description: string;
 };
 
+type FontScale = 'small' | 'medium' | 'large';
+
 const emptyInternshipDraft: InternshipDraft = {
   title: '',
   location: 'Hybrid',
@@ -58,6 +60,12 @@ const defaultNotificationPreferences: Record<Role, boolean> = {
   employer: true,
   instructor: true,
   admin: true,
+};
+
+const fontSizeByScale: Record<FontScale, string> = {
+  small: '15px',
+  medium: '16px',
+  large: '18px',
 };
 
 const allPages = new Set<WorkspacePage>(
@@ -95,8 +103,12 @@ const buildHash = (
   }`;
 
 function App() {
-  const [session, setSession] = useState<(typeof demoAccounts)[number] | null>(null);
-  const [currentPage, setCurrentPage] = useState<WorkspacePage>('dashboard');
+  const [session, setSession] = useState<(typeof demoAccounts)[number] | null>(
+    demoAccounts[0]
+  );
+  const [currentPage, setCurrentPage] = useState<WorkspacePage>(
+    demoAccounts[0].landingPage
+  );
   const [selectedAccountId, setSelectedAccountId] = useState(demoAccounts[0].id);
   const [loginForm, setLoginForm] = useState({
     email: demoAccounts[0].email,
@@ -143,6 +155,10 @@ function App() {
   const [editingInternshipId, setEditingInternshipId] = useState<string | null>(
     null
   );
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [fontScale, setFontScale] = useState<FontScale>('medium');
 
   const selectedAccount =
     demoAccounts.find((account) => account.id === selectedAccountId) ??
@@ -196,6 +212,7 @@ function App() {
       ).length,
     0
   );
+  const appFontSize = fontSizeByScale[fontScale];
 
   const navigateToPage = useCallback(
     (page: WorkspacePage, conversationId: string | null = null) => {
@@ -205,6 +222,8 @@ function App() {
 
       setCurrentPage(page);
       setSelectedConversationId(page === 'inbox' ? conversationId : null);
+      setIsSidebarOpen(false);
+      setIsSettingsOpen(false);
 
       const nextHash = buildHash(
         session.role,
@@ -307,6 +326,8 @@ function App() {
     setSession(matchedAccount);
     setCurrentPage(matchedAccount.landingPage);
     setSelectedConversationId(null);
+    setIsSidebarOpen(false);
+    setIsSettingsOpen(false);
     setLoginError('');
   };
 
@@ -314,6 +335,8 @@ function App() {
     setSession(null);
     setCurrentPage('dashboard');
     setSelectedConversationId(null);
+    setIsSidebarOpen(false);
+    setIsSettingsOpen(false);
     if (window.location.hash !== '#/login') {
       window.location.hash = '#/login';
     }
@@ -973,76 +996,176 @@ function App() {
 
   if (!session) {
     return (
-      <LoginScreen
-        accounts={demoAccounts}
-        selectedAccount={selectedAccount}
-        selectedAccountId={selectedAccountId}
-        setSelectedAccountId={setSelectedAccountId}
-        loginForm={loginForm}
-        setLoginForm={setLoginForm}
-        loginError={loginError}
-        onLogin={handleLogin}
-      />
+      <div
+        className={`app-root ${darkMode ? 'theme-dark' : ''}`}
+        style={{ fontSize: appFontSize }}
+      >
+        <LoginScreen
+          accounts={demoAccounts}
+          selectedAccount={selectedAccount}
+          selectedAccountId={selectedAccountId}
+          setSelectedAccountId={setSelectedAccountId}
+          loginForm={loginForm}
+          setLoginForm={setLoginForm}
+          loginError={loginError}
+          onLogin={handleLogin}
+        />
+      </div>
     );
   }
 
   return (
-    <div className={`workspace-shell role-${activeRole}`}>
-      <aside className="workspace-sidebar">
-        <div className="brand-block">
-          <p>BridgeBoard</p>
-          <h1>Portfolio</h1>
-        </div>
+    <div
+      className={`app-root ${darkMode ? 'theme-dark' : ''}`}
+      style={{ fontSize: appFontSize }}
+    >
+      <div className={`workspace-shell role-${activeRole}`}>
+        <div
+          className={`workspace-overlay ${isSidebarOpen ? 'visible' : ''}`}
+          onClick={() => setIsSidebarOpen(false)}
+        />
 
-        <div className="session-card">
-          <div className="session-avatar">{session.name.slice(0, 2).toUpperCase()}</div>
-          <div>
-            <strong>{session.name}</strong>
-            <span>{roleMeta[session.role].label}</span>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          {activePages.map((page) => (
+        <aside className={`workspace-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+          <div className="sidebar-head">
+            <div className="brand-block">
+              <p>BridgeBoard</p>
+              <h1>Portfolio</h1>
+            </div>
             <button
-              key={page.id}
               type="button"
-              className={`nav-link ${page.id === currentPage ? 'active' : ''}`}
-              onClick={() => navigateToPage(page.id)}
+              className="ghost-button icon-button"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label="Close menu"
             >
-              <div>
-                <strong>{page.label}</strong>
-                <span>{page.description}</span>
-              </div>
-              {page.id === 'notifications' && unreadCount > 0 ? (
-                <Badge tone="accent">{unreadCount}</Badge>
-              ) : null}
+              ×
             </button>
-          ))}
-        </nav>
-
-        <button type="button" className="ghost-button wide-button" onClick={handleLogout}>
-          Logout
-        </button>
-      </aside>
-
-      <main className="workspace-main">
-        <header className="workspace-header">
-          <div>
-            <p>{roleMeta[session.role].label}</p>
-            <h2>{activePageMeta?.label}</h2>
-            <span>{activePageMeta?.description}</span>
           </div>
-          <div className="header-badges">
-            <Badge tone="accent">{unreadCount} unread</Badge>
-            <Badge tone="success">
-              {notificationPreferences[session.role] ? 'Alerts on' : 'Alerts off'}
-            </Badge>
-          </div>
-        </header>
 
-        {renderWorkspace()}
-      </main>
+          <div className="session-card">
+            <div className="session-avatar">{session.name.slice(0, 2).toUpperCase()}</div>
+            <div>
+              <strong>{session.name}</strong>
+              <span>{roleMeta[session.role].label}</span>
+            </div>
+          </div>
+
+          <nav className="sidebar-nav">
+            {activePages.map((page) => (
+              <button
+                key={page.id}
+                type="button"
+                className={`nav-link ${page.id === currentPage ? 'active' : ''}`}
+                onClick={() => navigateToPage(page.id)}
+              >
+                <div>
+                  <strong>{page.label}</strong>
+                  <span>{page.description}</span>
+                </div>
+                {page.id === 'notifications' && unreadCount > 0 ? (
+                  <Badge tone="accent">{unreadCount}</Badge>
+                ) : null}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <main className="workspace-main">
+          <header className="workspace-topbar">
+            <div className="topbar-left">
+              <button
+                type="button"
+                className="ghost-button icon-button"
+                onClick={() => {
+                  setIsSidebarOpen((current) => !current);
+                  setIsSettingsOpen(false);
+                }}
+                aria-label="Open menu"
+              >
+                ☰
+              </button>
+              <div className="topbar-copy">
+                <p>{roleMeta[session.role].label}</p>
+                <strong>{activePageMeta?.label}</strong>
+              </div>
+            </div>
+
+            <div className="topbar-right">
+              <Badge tone="accent">{unreadCount} unread</Badge>
+              <div className="settings-wrap">
+                <button
+                  type="button"
+                  className={`ghost-button ${isSettingsOpen ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsSettingsOpen((current) => !current);
+                    setIsSidebarOpen(false);
+                  }}
+                >
+                  Settings
+                </button>
+                {isSettingsOpen ? (
+                  <div className="settings-panel">
+                    <div className="settings-block">
+                      <span className="settings-label">Text size</span>
+                      <div className="settings-segment">
+                        {(['small', 'medium', 'large'] as FontScale[]).map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            className={`settings-chip ${
+                              fontScale === size ? 'active' : ''
+                            }`}
+                            onClick={() => setFontScale(size)}
+                          >
+                            {size === 'small'
+                              ? 'Smaller'
+                              : size === 'large'
+                              ? 'Bigger'
+                              : 'Default'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="settings-row">
+                      <div>
+                        <strong>Theme</strong>
+                        <span>{darkMode ? 'Dark mode on' : 'Light mode on'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => setDarkMode((current) => !current)}
+                      >
+                        {darkMode ? 'Light mode' : 'Dark mode'}
+                      </button>
+                    </div>
+
+                    <div className="settings-row">
+                      <div>
+                        <strong>Account</strong>
+                        <span>{session.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={handleLogout}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <button type="button" className="primary-button" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          </header>
+
+          {renderWorkspace()}
+        </main>
+      </div>
     </div>
   );
 }
