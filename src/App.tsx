@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { demoAccounts, pagesByRole, type WorkspacePage } from './appConfig';
 import { Badge } from './components/ui';
@@ -23,7 +23,7 @@ import {
   type UserAccount,
   initialAppeals,
   initialCompanyRequests,
-  initialConversations,
+  initialConversationsByRole,
   initialCourses,
   initialEmployerProfile,
   initialInternships,
@@ -53,6 +53,47 @@ const emptyInternshipDraft: InternshipDraft = {
 const createId = (prefix: string) =>
   `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 
+const defaultNotificationPreferences: Record<Role, boolean> = {
+  student: true,
+  employer: true,
+  instructor: true,
+  admin: true,
+};
+
+const allPages = new Set<WorkspacePage>(
+  Object.values(pagesByRole).flatMap((pages) => pages.map((page) => page.id))
+);
+
+const parseHash = (
+  hash: string
+): {
+  role: Role | null;
+  page: WorkspacePage | null;
+  conversationId: string | null;
+} => {
+  const [rolePart, pagePart, conversationPart] = hash.replace(/^#\/?/, '').split('/');
+  const role = rolePart && rolePart in roleMeta ? (rolePart as Role) : null;
+  const page =
+    pagePart && allPages.has(pagePart as WorkspacePage)
+      ? (pagePart as WorkspacePage)
+      : null;
+
+  return {
+    role,
+    page,
+    conversationId: conversationPart ?? null,
+  };
+};
+
+const buildHash = (
+  role: Role,
+  page: WorkspacePage,
+  conversationId?: string | null
+) =>
+  `#/${role}/${page}${
+    page === 'inbox' && conversationId ? `/${conversationId}` : ''
+  }`;
+
 function App() {
   const [session, setSession] = useState<(typeof demoAccounts)[number] | null>(null);
   const [currentPage, setCurrentPage] = useState<WorkspacePage>('dashboard');
@@ -80,26 +121,23 @@ function App() {
   const [appeals, setAppeals] = useState<Appeal[]>(initialAppeals);
   const [notifications, setNotifications] =
     useState<NotificationItem[]>(initialNotifications);
-  const [conversations, setConversations] =
-    useState<Conversation[]>(initialConversations);
+  const [conversationsByRole, setConversationsByRole] = useState<
+    Record<Role, Conversation[]>
+  >(initialConversationsByRole);
   const [notificationPreferences, setNotificationPreferences] = useState<
     Record<Role, boolean>
-  >({
-    student: true,
-    employer: true,
-    instructor: true,
-    admin: true,
-  });
+  >(defaultNotificationPreferences);
 
-  const [selectedConversationId, setSelectedConversationId] = useState(
-    initialConversations[0].id
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
+    null
   );
-  const [messageDraft, setMessageDraft] = useState('');
+  const [messageDrafts, setMessageDrafts] = useState<Record<string, string>>({});
   const [studentInternshipQuery, setStudentInternshipQuery] = useState('');
   const [coverLetter, setCoverLetter] = useState(
     'I would love to contribute to a team building a clear, useful student-facing experience.'
   );
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, string>>({});
+  const [taskDrafts, setTaskDrafts] = useState<Record<string, string>>({});
   const [internshipDraft, setInternshipDraft] =
     useState<InternshipDraft>(emptyInternshipDraft);
   const [editingInternshipId, setEditingInternshipId] = useState<string | null>(
@@ -119,17 +157,6 @@ function App() {
     setLoginError('');
   }, [selectedAccount]);
 
-  useEffect(() => {
-    if (!session) {
-      return;
-    }
-
-    const allowedPages = pagesByRole[session.role].map((page) => page.id);
-    if (!allowedPages.includes(currentPage)) {
-      setCurrentPage(pagesByRole[session.role][0].id);
-    }
-  }, [session, currentPage]);
-
   const activeRole = session?.role ?? 'student';
   const activePages = session ? pagesByRole[session.role] : [];
   const activePageMeta = session
@@ -140,9 +167,14 @@ function App() {
     ? notifications.filter((item) => item.audience.includes(session.role))
     : [];
   const unreadCount = activeNotifications.filter((item) => !item.read).length;
+  const activeConversations = session ? conversationsByRole[session.role] : [];
   const selectedConversation =
-    conversations.find((conversation) => conversation.id === selectedConversationId) ??
-    conversations[0];
+    activeConversations.find(
+      (conversation) => conversation.id === selectedConversationId
+    ) ?? null;
+  const activeMessageDraft = selectedConversationId
+    ? messageDrafts[selectedConversationId] ?? ''
+    : '';
 
   const featuredProject =
     projects.find((project) => project.featured) ?? projects[0];
@@ -164,6 +196,68 @@ function App() {
       ).length,
     0
   );
+
+  const navigateToPage = useCallback(
+    (page: WorkspacePage, conversationId: string | null = null) => {
+      if (!session) {
+        return;
+      }
+
+      setCurrentPage(page);
+      setSelectedConversationId(page === 'inbox' ? conversationId : null);
+
+      const nextHash = buildHash(
+        session.role,
+        page,
+        page === 'inbox' ? conversationId : null
+      );
+
+      if (window.location.hash !== nextHash) {
+        window.location.hash = nextHash;
+      }
+    },
+    [session]
+  );
+
+  useEffect(() => {
+    if (!session) {
+      if (window.location.hash !== '#/login') {
+        window.location.hash = '#/login';
+      }
+      return;
+    }
+
+    const allowedPages = pagesByRole[session.role].map((page) => page.id);
+
+    const syncFromHash = () => {
+      const parsed = parseHash(window.location.hash);
+
+      if (parsed.role !== session.role || !parsed.page || !allowedPages.includes(parsed.page)) {
+        navigateToPage(session.landingPage);
+        return;
+      }
+
+      setCurrentPage(parsed.page);
+
+      if (parsed.page !== 'inbox') {
+        setSelectedConversationId(null);
+        return;
+      }
+
+      const conversationExists = parsed.conversationId
+        ? conversationsByRole[session.role].some(
+            (conversation) => conversation.id === parsed.conversationId
+          )
+        : false;
+
+      setSelectedConversationId(conversationExists ? parsed.conversationId : null);
+    };
+
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, [conversationsByRole, navigateToPage, session]);
 
   const addNotification = ({
     title,
@@ -212,14 +306,17 @@ function App() {
 
     setSession(matchedAccount);
     setCurrentPage(matchedAccount.landingPage);
+    setSelectedConversationId(null);
     setLoginError('');
   };
 
   const handleLogout = () => {
     setSession(null);
     setCurrentPage('dashboard');
-    setSelectedConversationId(initialConversations[0].id);
-    setMessageDraft('');
+    setSelectedConversationId(null);
+    if (window.location.hash !== '#/login') {
+      window.location.hash = '#/login';
+    }
   };
 
   const toggleNotificationRead = (notificationId: string) => {
@@ -256,6 +353,43 @@ function App() {
       title: 'Featured project changed',
       message: 'The selected project is now highlighted on the student profile.',
       audience: ['student'],
+    });
+  };
+
+  const addTaskToProject = (projectId: string) => {
+    const nextTaskTitle = taskDrafts[projectId]?.trim();
+
+    if (!nextTaskTitle) {
+      return;
+    }
+
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              tasks: [
+                ...project.tasks,
+                {
+                  id: createId('task'),
+                  title: nextTaskTitle,
+                  owner: studentProfile.name.split(' ')[0],
+                  state: 'Next',
+                  due: 'This week',
+                },
+              ],
+            }
+          : project
+      )
+    );
+    setTaskDrafts((current) => ({
+      ...current,
+      [projectId]: '',
+    }));
+    addNotification({
+      title: 'New task added',
+      message: `${nextTaskTitle} was added to the project task list.`,
+      audience: ['student', 'instructor'],
     });
   };
 
@@ -549,7 +683,9 @@ function App() {
   const rateProject = (projectId: string, rating: number) => {
     setProjects((current) =>
       current.map((project) =>
-        project.id === projectId ? { ...project, rating } : project
+        project.id === projectId
+          ? { ...project, rating: Math.max(0, Math.min(5, rating)) }
+          : project
       )
     );
   };
@@ -632,14 +768,34 @@ function App() {
     );
   };
 
-  const sendMessage = () => {
-    if (!messageDraft.trim()) {
+  const openConversation = (conversationId: string) => {
+    navigateToPage('inbox', conversationId);
+  };
+
+  const returnToConversationList = () => {
+    navigateToPage('inbox');
+  };
+
+  const setActiveMessageDraft = (value: string) => {
+    if (!selectedConversationId) {
       return;
     }
 
-    setConversations((current) =>
-      current.map((conversation) =>
-        conversation.id === selectedConversation.id
+    setMessageDrafts((current) => ({
+      ...current,
+      [selectedConversationId]: value,
+    }));
+  };
+
+  const sendMessage = () => {
+    if (!session || !selectedConversationId || !activeMessageDraft.trim()) {
+      return;
+    }
+
+    setConversationsByRole((current) => ({
+      ...current,
+      [session.role]: current[session.role].map((conversation) =>
+        conversation.id === selectedConversationId
           ? {
               ...conversation,
               unread: 0,
@@ -648,15 +804,18 @@ function App() {
                 {
                   id: createId('message'),
                   author: 'me',
-                  body: messageDraft.trim(),
+                  body: activeMessageDraft.trim(),
                   time: 'Just now',
                 },
               ],
             }
           : conversation
-      )
-    );
-    setMessageDraft('');
+      ),
+    }));
+    setMessageDrafts((current) => ({
+      ...current,
+      [selectedConversationId]: '',
+    }));
   };
 
   const toggleNotificationsEnabled = () => {
@@ -670,26 +829,31 @@ function App() {
     }));
   };
 
+  const sharedMessageProps = session
+    ? {
+        conversations: activeConversations,
+        selectedConversation,
+        messageDraft: activeMessageDraft,
+        setMessageDraft: setActiveMessageDraft,
+        onOpenConversation: openConversation,
+        onBackToConversationList: returnToConversationList,
+        sendMessage,
+      }
+    : null;
+
+  const sharedNotificationProps = session
+    ? {
+        notifications: activeNotifications,
+        notificationsEnabled: notificationPreferences[session.role],
+        onToggleNotificationsEnabled: toggleNotificationsEnabled,
+        onToggleNotificationRead: toggleNotificationRead,
+      }
+    : null;
+
   const renderWorkspace = () => {
-    if (!session) {
+    if (!session || !sharedMessageProps || !sharedNotificationProps) {
       return null;
     }
-
-    const sharedMessageProps = {
-      conversations,
-      selectedConversation,
-      selectedConversationId,
-      setSelectedConversationId,
-      messageDraft,
-      setMessageDraft,
-      sendMessage,
-    };
-    const sharedNotificationProps = {
-      notifications: activeNotifications,
-      notificationsEnabled: notificationPreferences[session.role],
-      onToggleNotificationsEnabled: toggleNotificationsEnabled,
-      onToggleNotificationRead: toggleNotificationRead,
-    };
 
     switch (session.role) {
       case 'student':
@@ -705,10 +869,13 @@ function App() {
             setInternshipQuery={setStudentInternshipQuery}
             coverLetter={coverLetter}
             setCoverLetter={setCoverLetter}
-            setCurrentPage={setCurrentPage}
+            setCurrentPage={navigateToPage}
             toggleProjectVisibility={toggleProjectVisibility}
             setFeaturedProjectById={setFeaturedProjectById}
             saveStudentProfile={saveStudentProfile}
+            addTaskToProject={addTaskToProject}
+            taskDrafts={taskDrafts}
+            setTaskDrafts={setTaskDrafts}
             applyToInternship={applyToInternship}
             toggleInternshipFavorite={toggleInternshipFavorite}
             {...sharedMessageProps}
@@ -738,7 +905,7 @@ function App() {
             toggleInternshipStatus={toggleInternshipStatus}
             deleteInternship={deleteInternship}
             portfolios={portfolios}
-            setCurrentPage={setCurrentPage}
+            setCurrentPage={navigateToPage}
             updateApplicantStatus={updateApplicantStatus}
             {...sharedMessageProps}
             notifications={sharedNotificationProps.notifications}
@@ -765,7 +932,7 @@ function App() {
             rateProject={rateProject}
             flagProject={flagProject}
             pendingInvitations={pendingInvitations}
-            setCurrentPage={setCurrentPage}
+            setCurrentPage={navigateToPage}
             {...sharedMessageProps}
             notifications={sharedNotificationProps.notifications}
             notificationsEnabled={sharedNotificationProps.notificationsEnabled}
@@ -789,7 +956,7 @@ function App() {
             projects={projects}
             featuredProject={featuredProject}
             instructorProfile={instructorProfile}
-            setCurrentPage={setCurrentPage}
+            setCurrentPage={navigateToPage}
             {...sharedMessageProps}
             notifications={sharedNotificationProps.notifications}
             notificationsEnabled={sharedNotificationProps.notificationsEnabled}
@@ -823,8 +990,8 @@ function App() {
     <div className={`workspace-shell role-${activeRole}`}>
       <aside className="workspace-sidebar">
         <div className="brand-block">
-          <p>BridgeBoard</p>
-          <h1>Prototype</h1>
+          <p>GUC project portfolio</p>
+          <h1>MS2 prototype</h1>
         </div>
 
         <div className="session-card">
@@ -841,7 +1008,7 @@ function App() {
               key={page.id}
               type="button"
               className={`nav-link ${page.id === currentPage ? 'active' : ''}`}
-              onClick={() => setCurrentPage(page.id)}
+              onClick={() => navigateToPage(page.id)}
             >
               <div>
                 <strong>{page.label}</strong>

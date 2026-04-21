@@ -635,8 +635,8 @@ export const initialUsers: UserAccount[] = [
   },
   {
     id: 'user-4',
-    name: 'Nour Admin',
-    email: 'nour.admin@guc.edu.eg',
+    name: 'Nor Mohamed',
+    email: 'nor.mohamed@guc.edu.eg',
     role: 'admin',
     status: 'Active',
   },
@@ -752,68 +752,217 @@ export const initialNotifications: NotificationItem[] = [
   },
 ];
 
-export const initialConversations: Conversation[] = [
-  {
-    id: 'conversation-1',
-    name: 'Mariam Saad',
-    role: 'Employer',
-    subtitle: 'Bright Labs',
-    unread: 2,
-    messages: [
-      {
-        id: 'message-1',
-        author: 'them',
-        body: 'Your portfolio stood out to us, especially the project visibility controls and internship analytics ideas.',
-        time: '10:12',
-      },
-      {
-        id: 'message-2',
-        author: 'me',
-        body: 'Thank you. I would be happy to walk you through the prototype and the thinking behind the interaction model.',
-        time: '10:16',
-      },
-      {
-        id: 'message-3',
-        author: 'them',
-        body: 'Please share your availability this week for a short intro call.',
-        time: '10:19',
-      },
-    ],
-  },
-  {
-    id: 'conversation-2',
-    name: 'Dr. Maya El-Adl',
-    role: 'Course Instructor',
-    subtitle: 'Bachelor Project',
-    unread: 0,
-    messages: [
-      {
-        id: 'message-4',
-        author: 'them',
-        body: 'The overall direction is promising. Before the milestone review, give the notifications panel one stronger hierarchy cue.',
-        time: 'Yesterday',
-      },
-      {
-        id: 'message-5',
-        author: 'me',
-        body: 'I will update the layout and make unread items more prominent.',
-        time: 'Yesterday',
-      },
-    ],
-  },
-  {
-    id: 'conversation-3',
-    name: 'Karim Tarek',
-    role: 'Student Collaborator',
-    subtitle: 'Career Compass',
-    unread: 1,
-    messages: [
-      {
-        id: 'message-6',
-        author: 'them',
-        body: 'I pushed the revised demo script. Could you reorder the project tasks so the recording task appears second?',
-        time: 'Today',
-      },
-    ],
-  },
-];
+export const initialConversationsByRole: Record<Role, Conversation[]> = {
+  student: [
+    {
+      id: 'student-conversation-1',
+      name: 'Mariam Saad',
+      role: 'Employer',
+      subtitle: 'Bright Labs',
+      unread: 2,
+      messages: [
+        {
+          id: 'message-1',
+          author: 'them',
+          body: 'Your portfolio stood out to us, especially the project visibility controls and internship analytics ideas.',
+          time: '10:12',
+        },
+        {
+          id: 'message-2',
+          author: 'me',
+          body: 'Thank you. I would be happy to walk you through the prototype and the thinking behind the interaction model.',
+          time: '10:16',
+        },
+        {
+          id: 'message-3',
+          author: 'them',
+          body: 'Please share your availability this week for a short intro call.',
+          time: '10:19',
+        },
+      ],
+    },
+    {
+      id: 'student-conversation-2',
+      name: 'Dr. Maya El-Adl',
+      role: 'Course Instructor',
+      subtitle: 'Bachelor Project',
+      unread: 0,
+      messages: [
+        {
+          id: 'message-4',
+          author: 'them',
+          body: 'The overall direction is promising. Before the milestone review, give the notifications panel one stronger hierarchy cue.',
+          time: 'Yesterday',
+        },
+        {
+          id: 'message-5',
+          author: 'me',
+          body: 'I will update the layout and make unread items more prominent.',
+          time: 'Yesterday',
+        },
+      ],
+    },
+    {
+      id: 'student-conversation-3',
+      name: 'Karim Tarek',
+      role: 'Student Collaborator',
+      subtitle: 'Career Compass',
+      unread: 1,
+      messages: [
+        {
+          id: 'message-6',
+          author: 'them',
+          body: 'I pushed the revised demo script. Could you add one more task for the updated walkthrough?',
+          time: 'Today',
+        },
+      ],
+    },
+  ],
+  employer: [
+    {
+      id: 'employer-conversation-1',
+      name: 'Lina Hassan',
+      role: 'Student',
+      subtitle: 'Career Compass portfolio',
+      unread: 1,
+      messages: [
+        {
+          id: 'message-7',
+          author: 'me',
+          body: 'We liked the clarity of your featured project. Are you available for a short screening call?',
+          time: '09:10',
+        },
+        {
+          id: 'message-8',
+          author: 'them',
+          body: 'Yes, I am free after 2 PM tomorrow if that works for your team.',
+          time: '09:18',
+        },
+      ],
+    },
+    {
+      id: 'employer-conversation-2',
+      name: 'Nor Mohamed',
+      role: 'Administrator',
+      subtitle: 'Company verification',
+      unread: 0,
+      messages: [
+        {
+          id: 'message-9',
+          author: 'them',
+          body: 'Your commercial register was received. Please keep one contact phone visible on the company profile.',
+          time: 'Yesterday',
+        },
+      ],
+    },
+    {
+      id: 'employer-conversation-3',
+      name: 'Dr. Maya El-Adl',
+      role: 'Course Instructor',
+      subtitle: 'Internship feedback',
+      unread: 0,
+      messages: [
+        {
+          id: 'message-10',
+          author: 'me',
+          body: 'We would appreciate a quick recommendation on strong frontend students for the current opening.',
+          time: 'Monday',
+        },
+      ],
+    },
+  ],
+  instructor: [
+    {
+      id: 'instructor-conversation-1',
+      name: 'Lina Hassan',
+      role: 'Student',
+      subtitle: 'Career Compass review',
+      unread: 1,
+      messages: [
+        {
+          id: 'message-11',
+          author: 'them',
+          body: 'I updated the project structure and made the notifications page easier to scan. Would you like me to submit the final draft now?',
+          time: '11:05',
+        },
+      ],
+    },
+    {
+      id: 'instructor-conversation-2',
+      name: 'Nor Mohamed',
+      role: 'Administrator',
+      subtitle: 'Course link request',
+      unread: 0,
+      messages: [
+        {
+          id: 'message-12',
+          author: 'them',
+          body: 'CSEN 703 is ready to be linked to your profile after the latest admin review.',
+          time: 'Yesterday',
+        },
+      ],
+    },
+    {
+      id: 'instructor-conversation-3',
+      name: 'Dr. Salma Nabil',
+      role: 'Course Instructor',
+      subtitle: 'Studio course coordination',
+      unread: 0,
+      messages: [
+        {
+          id: 'message-13',
+          author: 'me',
+          body: 'I will cover the next batch of portfolio reviews if you handle the first round of draft comments.',
+          time: 'Sunday',
+        },
+      ],
+    },
+  ],
+  admin: [
+    {
+      id: 'admin-conversation-1',
+      name: 'Mariam Saad',
+      role: 'Employer',
+      subtitle: 'Bright Labs approval',
+      unread: 1,
+      messages: [
+        {
+          id: 'message-14',
+          author: 'them',
+          body: 'We uploaded the updated tax certificate and company logo. Please let us know if anything else is needed.',
+          time: '08:40',
+        },
+      ],
+    },
+    {
+      id: 'admin-conversation-2',
+      name: 'Dr. Maya El-Adl',
+      role: 'Course Instructor',
+      subtitle: 'Flagged project review',
+      unread: 0,
+      messages: [
+        {
+          id: 'message-15',
+          author: 'them',
+          body: 'I left review notes on the flagged project. The student appeal looks reasonable after the citations update.',
+          time: 'Yesterday',
+        },
+      ],
+    },
+    {
+      id: 'admin-conversation-3',
+      name: 'Lina Hassan',
+      role: 'Student',
+      subtitle: 'Appeal follow-up',
+      unread: 0,
+      messages: [
+        {
+          id: 'message-16',
+          author: 'me',
+          body: 'Your appeal is under review. We will update the project status once the instructor feedback is finalized.',
+          time: 'Monday',
+        },
+      ],
+    },
+  ],
+};

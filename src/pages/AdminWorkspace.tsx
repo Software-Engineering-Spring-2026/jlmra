@@ -31,11 +31,11 @@ type AdminWorkspaceProps = {
   instructorProfile: InstructorProfile;
   setCurrentPage: (page: WorkspacePage) => void;
   conversations: Conversation[];
-  selectedConversation: Conversation;
-  selectedConversationId: string;
-  setSelectedConversationId: (id: string) => void;
+  selectedConversation: Conversation | null;
   messageDraft: string;
   setMessageDraft: (value: string) => void;
+  onOpenConversation: (id: string) => void;
+  onBackToConversationList: () => void;
   sendMessage: () => void;
   notifications: NotificationItem[];
   notificationsEnabled: boolean;
@@ -58,10 +58,10 @@ export function AdminWorkspace({
   setCurrentPage,
   conversations,
   selectedConversation,
-  selectedConversationId,
-  setSelectedConversationId,
   messageDraft,
   setMessageDraft,
+  onOpenConversation,
+  onBackToConversationList,
   sendMessage,
   notifications,
   notificationsEnabled,
@@ -361,10 +361,10 @@ export function AdminWorkspace({
           role="admin"
           conversations={conversations}
           selectedConversation={selectedConversation}
-          selectedConversationId={selectedConversationId}
-          setSelectedConversationId={setSelectedConversationId}
           messageDraft={messageDraft}
           setMessageDraft={setMessageDraft}
+          onOpenConversation={onOpenConversation}
+          onBackToConversationList={onBackToConversationList}
           onSendMessage={sendMessage}
         />
       );

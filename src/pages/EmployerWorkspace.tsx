@@ -44,11 +44,11 @@ type EmployerWorkspaceProps = {
     nextStatus: 'Shortlisted' | 'Accepted' | 'Rejected'
   ) => void;
   conversations: Conversation[];
-  selectedConversation: Conversation;
-  selectedConversationId: string;
-  setSelectedConversationId: (id: string) => void;
+  selectedConversation: Conversation | null;
   messageDraft: string;
   setMessageDraft: (value: string) => void;
+  onOpenConversation: (id: string) => void;
+  onBackToConversationList: () => void;
   sendMessage: () => void;
   notifications: NotificationItem[];
   notificationsEnabled: boolean;
@@ -76,10 +76,10 @@ export function EmployerWorkspace({
   updateApplicantStatus,
   conversations,
   selectedConversation,
-  selectedConversationId,
-  setSelectedConversationId,
   messageDraft,
   setMessageDraft,
+  onOpenConversation,
+  onBackToConversationList,
   sendMessage,
   notifications,
   notificationsEnabled,
@@ -316,7 +316,7 @@ export function EmployerWorkspace({
                   />
                 </label>
               </div>
-              <div className="button-row">
+              <div className="button-row form-actions">
                 <button
                   type="button"
                   className="primary-button"
@@ -473,10 +473,10 @@ export function EmployerWorkspace({
           role="employer"
           conversations={conversations}
           selectedConversation={selectedConversation}
-          selectedConversationId={selectedConversationId}
-          setSelectedConversationId={setSelectedConversationId}
           messageDraft={messageDraft}
           setMessageDraft={setMessageDraft}
+          onOpenConversation={onOpenConversation}
+          onBackToConversationList={onBackToConversationList}
           onSendMessage={sendMessage}
         />
       );

@@ -35,36 +35,11 @@ export function LoginScreen({
 }: LoginScreenProps) {
   return (
     <div className="login-shell">
-      <section className="login-hero">
-        <p className="hero-eyebrow">Milestone 2 React prototype</p>
-        <h1>BridgeBoard</h1>
-        <p className="hero-copy">
-          A cleaner prototype for your PM review, starting with a real login page
-          and then moving each user into their own role-based workspace.
-        </p>
-        <div className="hero-points">
-          <div className="hero-point">
-            <strong>4 demo users</strong>
-            <span>Student, employer, course instructor, and administrator.</span>
-          </div>
-          <div className="hero-point">
-            <strong>Separated pages</strong>
-            <span>Each section is focused, so the UI is easier to follow and explain.</span>
-          </div>
-          <div className="hero-point">
-            <strong>Dummy data stays rich</strong>
-            <span>
-              The information is still there, but it is now surfaced in smaller pieces.
-            </span>
-          </div>
-        </div>
-      </section>
-
       <section className="login-card">
         <div className="login-card-head">
           <p>Sign in</p>
-          <h2>Choose a demo account</h2>
-          <span>Each account opens its own workspace and landing page.</span>
+          <h2>Choose an account</h2>
+          <span>Each account opens its own role workspace and pages.</span>
         </div>
 
         <div className="account-grid">

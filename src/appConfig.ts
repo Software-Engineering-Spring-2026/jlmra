@@ -61,8 +61,8 @@ export const demoAccounts: DemoAccount[] = [
   {
     id: 'demo-admin',
     role: 'admin',
-    name: 'Nour Admin',
-    email: 'nour.admin@guc.edu.eg',
+    name: 'Nor Mohamed',
+    email: 'nor.mohamed@guc.edu.eg',
     password: 'Admin123',
     otp: '482190',
     landingPage: 'dashboard',

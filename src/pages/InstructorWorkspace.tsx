@@ -27,11 +27,11 @@ type InstructorWorkspaceProps = {
   pendingInvitations: number;
   setCurrentPage: (page: WorkspacePage) => void;
   conversations: Conversation[];
-  selectedConversation: Conversation;
-  selectedConversationId: string;
-  setSelectedConversationId: (id: string) => void;
+  selectedConversation: Conversation | null;
   messageDraft: string;
   setMessageDraft: (value: string) => void;
+  onOpenConversation: (id: string) => void;
+  onBackToConversationList: () => void;
   sendMessage: () => void;
   notifications: NotificationItem[];
   notificationsEnabled: boolean;
@@ -56,10 +56,10 @@ export function InstructorWorkspace({
   setCurrentPage,
   conversations,
   selectedConversation,
-  selectedConversationId,
-  setSelectedConversationId,
   messageDraft,
   setMessageDraft,
+  onOpenConversation,
+  onBackToConversationList,
   sendMessage,
   notifications,
   notificationsEnabled,
@@ -277,17 +277,29 @@ export function InstructorWorkspace({
                   <Badge tone="accent">{project.rating.toFixed(1)}/5</Badge>
                 </div>
                 <p>{project.summary}</p>
-                <div className="button-row">
-                  {[3, 4, 5].map((rating) => (
-                    <button
-                      key={rating}
-                      type="button"
-                      className="ghost-button"
-                      onClick={() => rateProject(project.id, rating)}
-                    >
-                      Rate {rating}/5
-                    </button>
-                  ))}
+                <div className="rating-row">
+                  <div className="star-rating" aria-label={`Rate ${project.title}`}>
+                    {[1, 2, 3, 4, 5].map((rating) => (
+                      <button
+                        key={rating}
+                        type="button"
+                        className={`star-button ${
+                          rating <= Math.round(project.rating) ? 'active' : ''
+                        }`}
+                        onClick={() => rateProject(project.id, rating)}
+                        aria-label={`Rate ${rating} out of 5`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => rateProject(project.id, 0)}
+                  >
+                    Clear to 0
+                  </button>
                   <button
                     type="button"
                     className="ghost-button danger"
@@ -327,10 +339,10 @@ export function InstructorWorkspace({
           role="instructor"
           conversations={conversations}
           selectedConversation={selectedConversation}
-          selectedConversationId={selectedConversationId}
-          setSelectedConversationId={setSelectedConversationId}
           messageDraft={messageDraft}
           setMessageDraft={setMessageDraft}
+          onOpenConversation={onOpenConversation}
+          onBackToConversationList={onBackToConversationList}
           onSendMessage={sendMessage}
         />
       );

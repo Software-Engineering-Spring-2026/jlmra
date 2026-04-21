@@ -1,14 +1,15 @@
 import React from 'react';
 import { type WorkspacePage } from '../appConfig';
 import {
+  type Conversation,
   type Internship,
+  type NotificationItem,
   type Project,
   type StudentProfile,
 } from '../mockData';
 import { Badge, PageHeader, Panel, StatCard } from '../components/ui';
 import { InboxPage } from './InboxPage';
 import { NotificationsPage } from './NotificationsPage';
-import { type Conversation, type NotificationItem } from '../mockData';
 
 type StudentWorkspaceProps = {
   currentPage: WorkspacePage;
@@ -25,14 +26,17 @@ type StudentWorkspaceProps = {
   toggleProjectVisibility: (projectId: string) => void;
   setFeaturedProjectById: (projectId: string) => void;
   saveStudentProfile: () => void;
+  addTaskToProject: (projectId: string) => void;
+  taskDrafts: Record<string, string>;
+  setTaskDrafts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   applyToInternship: (internshipId: string) => void;
   toggleInternshipFavorite: (internshipId: string) => void;
   conversations: Conversation[];
-  selectedConversation: Conversation;
-  selectedConversationId: string;
-  setSelectedConversationId: (id: string) => void;
+  selectedConversation: Conversation | null;
   messageDraft: string;
   setMessageDraft: (value: string) => void;
+  onOpenConversation: (id: string) => void;
+  onBackToConversationList: () => void;
   sendMessage: () => void;
   notifications: NotificationItem[];
   notificationsEnabled: boolean;
@@ -55,14 +59,17 @@ export function StudentWorkspace({
   toggleProjectVisibility,
   setFeaturedProjectById,
   saveStudentProfile,
+  addTaskToProject,
+  taskDrafts,
+  setTaskDrafts,
   applyToInternship,
   toggleInternshipFavorite,
   conversations,
   selectedConversation,
-  selectedConversationId,
-  setSelectedConversationId,
   messageDraft,
   setMessageDraft,
+  onOpenConversation,
+  onBackToConversationList,
   sendMessage,
   notifications,
   notificationsEnabled,
@@ -324,6 +331,25 @@ export function StudentWorkspace({
                         </div>
                       ))}
                     </div>
+                    <div className="task-composer">
+                      <input
+                        value={taskDrafts[project.id] ?? ''}
+                        onChange={(event) =>
+                          setTaskDrafts((current) => ({
+                            ...current,
+                            [project.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Add a new task"
+                      />
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => addTaskToProject(project.id)}
+                      >
+                        Add Task
+                      </button>
+                    </div>
                   </Panel>
                   <Panel title="Feedback" subtitle="Instructor comments for this project">
                     <div className="simple-list">
@@ -428,10 +454,10 @@ export function StudentWorkspace({
           role="student"
           conversations={conversations}
           selectedConversation={selectedConversation}
-          selectedConversationId={selectedConversationId}
-          setSelectedConversationId={setSelectedConversationId}
           messageDraft={messageDraft}
           setMessageDraft={setMessageDraft}
+          onOpenConversation={onOpenConversation}
+          onBackToConversationList={onBackToConversationList}
           onSendMessage={sendMessage}
         />
       );
