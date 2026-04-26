@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { type WorkspacePage } from '../appConfig';
 import {
   type Conversation,
@@ -6,8 +6,11 @@ import {
   type Internship,
   type NotificationItem,
   type PortfolioCard,
+  type Project,
+  type Role,
 } from '../mockData';
 import { Badge, PageHeader, Panel, StatCard } from '../components/ui';
+import { DiscoveryHub } from '../components/DiscoveryHub';
 import { InboxPage } from './InboxPage';
 import { NotificationsPage } from './NotificationsPage';
 
@@ -20,6 +23,7 @@ type InternshipDraft = {
 
 type EmployerWorkspaceProps = {
   currentPage: WorkspacePage;
+  role: Role;
   employerProfile: EmployerProfile;
   setEmployerProfile: React.Dispatch<React.SetStateAction<EmployerProfile>>;
   saveEmployerProfile: () => void;
@@ -37,6 +41,11 @@ type EmployerWorkspaceProps = {
   ) => void;
   deleteInternship: (internshipId: string) => void;
   portfolios: PortfolioCard[];
+  projects: Project[];
+  favoriteProjectIds: string[];
+  favoritePortfolioIds: string[];
+  onToggleProjectFavorite: (projectId: string) => void;
+  onTogglePortfolioFavorite: (portfolioId: string) => void;
   setCurrentPage: (page: WorkspacePage) => void;
   updateApplicantStatus: (
     internshipId: string,
@@ -58,6 +67,7 @@ type EmployerWorkspaceProps = {
 
 export function EmployerWorkspace({
   currentPage,
+  role,
   employerProfile,
   setEmployerProfile,
   saveEmployerProfile,
@@ -72,6 +82,11 @@ export function EmployerWorkspace({
   toggleInternshipStatus,
   deleteInternship,
   portfolios,
+  projects,
+  favoriteProjectIds,
+  favoritePortfolioIds,
+  onToggleProjectFavorite,
+  onTogglePortfolioFavorite,
   setCurrentPage,
   updateApplicantStatus,
   conversations,
@@ -86,6 +101,28 @@ export function EmployerWorkspace({
   onToggleNotificationsEnabled,
   onToggleNotificationRead,
 }: EmployerWorkspaceProps) {
+  const [applicantSort, setApplicantSort] = useState<'score' | 'name'>('score');
+  const completedStudentsCount = employerInternships.reduce(
+    (count, internship) =>
+      count +
+      internship.applications.filter((application) => application.status === 'Accepted')
+        .length,
+    0
+  );
+  const suggestedApplications = useMemo(
+    () =>
+      employerInternships
+        .flatMap((internship) =>
+          internship.applications.map((application) => ({
+            ...application,
+            internshipTitle: internship.title,
+          }))
+        )
+        .sort((left, right) => right.score - left.score)
+        .slice(0, 3),
+    [employerInternships]
+  );
+
   switch (currentPage) {
     case 'dashboard':
       return (
@@ -125,6 +162,11 @@ export function EmployerWorkspace({
               )}
               helper="Applicants are grouped by internship on the applicants page."
             />
+            <StatCard
+              label="Interns hired"
+              value={String(completedStudentsCount)}
+              helper="A front-end snapshot of accepted internship outcomes over time."
+            />
           </div>
           <div className="content-grid">
             <Panel title="Company summary" subtitle="A quick overview before deeper pages">
@@ -153,6 +195,50 @@ export function EmployerWorkspace({
               </div>
             </Panel>
           </div>
+          <div className="content-grid">
+            <Panel title="Hiring statistics" subtitle="Internships offered and accepted candidates over time">
+              <div className="simple-list">
+                <div className="simple-list-item">
+                  <strong>Total internships offered</strong>
+                  <span>{employerInternships.length}</span>
+                </div>
+                <div className="simple-list-item">
+                  <strong>Accepted students</strong>
+                  <span>{completedStudentsCount}</span>
+                </div>
+                <div className="simple-list-item">
+                  <strong>Currently hiring</strong>
+                  <span>
+                    {
+                      employerInternships.filter((internship) => internship.status === 'Live')
+                        .length
+                    }
+                  </span>
+                </div>
+              </div>
+            </Panel>
+            <Panel title="Top suggested applications" subtitle="Based on saved portfolio and skills fit signals">
+              <div className="simple-list">
+                {suggestedApplications.map((application) => (
+                  <div key={application.id} className="simple-list-item">
+                    <strong>{application.student}</strong>
+                    <span>
+                      {application.internshipTitle} · Score {application.score}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </div>
+          <DiscoveryHub
+            role={role}
+            projects={projects}
+            portfolios={portfolios}
+            favoriteProjectIds={favoriteProjectIds}
+            favoritePortfolioIds={favoritePortfolioIds}
+            onToggleProjectFavorite={onToggleProjectFavorite}
+            onTogglePortfolioFavorite={onTogglePortfolioFavorite}
+          />
         </div>
       );
     case 'profile':
@@ -396,6 +482,24 @@ export function EmployerWorkspace({
             eyebrow="Employer applicants"
             title="Applicants by internship"
             description="This page is intentionally separate so reviewing students feels like a focused hiring task."
+            action={
+              <div className="button-row">
+                <button
+                  type="button"
+                  className={`ghost-button ${applicantSort === 'score' ? 'active' : ''}`}
+                  onClick={() => setApplicantSort('score')}
+                >
+                  Sort by top contributors
+                </button>
+                <button
+                  type="button"
+                  className={`ghost-button ${applicantSort === 'name' ? 'active' : ''}`}
+                  onClick={() => setApplicantSort('name')}
+                >
+                  Sort by name
+                </button>
+              </div>
+            }
           />
           <div className="stack-list">
             {employerInternships.map((internship) => (
@@ -408,7 +512,13 @@ export function EmployerWorkspace({
                   <Badge tone="accent">{internship.status}</Badge>
                 </div>
                 <div className="simple-list">
-                  {internship.applications.map((application) => (
+                  {[...internship.applications]
+                    .sort((left, right) =>
+                      applicantSort === 'score'
+                        ? right.score - left.score
+                        : left.student.localeCompare(right.student)
+                    )
+                    .map((application) => (
                     <div key={application.id} className="applicant-row">
                       <div>
                         <strong>{application.student}</strong>

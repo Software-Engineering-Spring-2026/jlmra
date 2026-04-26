@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { type WorkspacePage } from '../appConfig';
 import {
   type Appeal,
@@ -7,15 +7,19 @@ import {
   type Course,
   type InstructorProfile,
   type NotificationItem,
+  type PortfolioCard,
   type Project,
+  type Role,
   type UserAccount,
 } from '../mockData';
 import { Badge, PageHeader, Panel, StatCard } from '../components/ui';
+import { DiscoveryHub } from '../components/DiscoveryHub';
 import { InboxPage } from './InboxPage';
 import { NotificationsPage } from './NotificationsPage';
 
 type AdminWorkspaceProps = {
   currentPage: WorkspacePage;
+  role: Role;
   companyRequests: CompanyRequest[];
   updateCompanyRequest: (
     requestId: string,
@@ -25,10 +29,28 @@ type AdminWorkspaceProps = {
   resolveAppeal: (appealId: string) => void;
   users: UserAccount[];
   toggleUserStatus: (userId: string) => void;
+  createAdminAccount: (name: string, email: string) => void;
   courses: Course[];
+  saveCourse: (code: string, name: string, instructor: string) => void;
+  deleteCourse: (code: string) => void;
+  courseLinkRequests: Array<{
+    id: string;
+    courseCode: string;
+    courseName: string;
+    instructor: string;
+    action: 'Link' | 'Unlink';
+    status: 'Pending' | 'Approved' | 'Rejected';
+  }>;
+  resolveCourseLinkRequest: (
+    requestId: string,
+    nextStatus: 'Pending' | 'Approved' | 'Rejected'
+  ) => void;
   projects: Project[];
+  portfolios: PortfolioCard[];
   featuredProject: Project;
   instructorProfile: InstructorProfile;
+  inactiveProjectIds: string[];
+  toggleProjectActive: (projectId: string) => void;
   setCurrentPage: (page: WorkspacePage) => void;
   conversations: Conversation[];
   selectedConversation: Conversation | null;
@@ -45,16 +67,25 @@ type AdminWorkspaceProps = {
 
 export function AdminWorkspace({
   currentPage,
+  role,
   companyRequests,
   updateCompanyRequest,
   appeals,
   resolveAppeal,
   users,
   toggleUserStatus,
+  createAdminAccount,
   courses,
+  saveCourse,
+  deleteCourse,
+  courseLinkRequests,
+  resolveCourseLinkRequest,
   projects,
+  portfolios,
   featuredProject,
   instructorProfile,
+  inactiveProjectIds,
+  toggleProjectActive,
   setCurrentPage,
   conversations,
   selectedConversation,
@@ -68,6 +99,16 @@ export function AdminWorkspace({
   onToggleNotificationsEnabled,
   onToggleNotificationRead,
 }: AdminWorkspaceProps) {
+  const [adminDraft, setAdminDraft] = useState({
+    name: 'Alaa Farouk',
+    email: 'alaa.farouk@guc.edu.eg',
+  });
+  const [courseDraft, setCourseDraft] = useState({
+    code: 'CSEN 809',
+    name: 'Product Platform Studio',
+    instructor: 'Dr. Rania Mostafa',
+  });
+
   switch (currentPage) {
     case 'dashboard':
       return (
@@ -131,6 +172,7 @@ export function AdminWorkspace({
               </div>
             </Panel>
           </div>
+          <DiscoveryHub role={role} projects={projects} portfolios={portfolios} />
         </div>
       );
     case 'approvals':
@@ -219,6 +261,32 @@ export function AdminWorkspace({
               </div>
             </Panel>
           </div>
+          <Panel title="Flagged projects" subtitle="Projects that can be activated or deactivated">
+            <div className="stack-list">
+              {projects.map((project) => (
+                <article key={project.id} className="list-card">
+                  <div className="list-card-head">
+                    <div>
+                      <strong>{project.title}</strong>
+                      <span>{project.course}</span>
+                    </div>
+                    <Badge tone={inactiveProjectIds.includes(project.id) ? 'warn' : 'success'}>
+                      {inactiveProjectIds.includes(project.id) ? 'Inactive' : 'Active'}
+                    </Badge>
+                  </div>
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => toggleProjectActive(project.id)}
+                    >
+                      {inactiveProjectIds.includes(project.id) ? 'Activate' : 'Deactivate'}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </Panel>
         </div>
       );
     case 'users':
@@ -272,11 +340,159 @@ export function AdminWorkspace({
                         {course.linked ? 'Linked' : 'Standalone'}
                       </Badge>
                     </div>
+                    <div className="button-row">
+                      <button
+                        type="button"
+                        className="ghost-button danger"
+                        onClick={() => deleteCourse(course.code)}
+                        disabled={course.code === 'BP401'}
+                      >
+                        Delete course
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>
             </Panel>
           </div>
+          <div className="content-grid content-grid-wide">
+            <Panel title="Create admin" subtitle="Admin creates more admins through the platform">
+              <div className="form-grid">
+                <label>
+                  Full name
+                  <input
+                    value={adminDraft.name}
+                    onChange={(event) =>
+                      setAdminDraft((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    value={adminDraft.email}
+                    onChange={(event) =>
+                      setAdminDraft((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+              <div className="button-row top-space">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => createAdminAccount(adminDraft.name, adminDraft.email)}
+                >
+                  Create admin account
+                </button>
+              </div>
+            </Panel>
+            <Panel title="Course CRUD" subtitle="Create or edit a course code, name, and instructor">
+              <div className="form-grid">
+                <label>
+                  Course code
+                  <input
+                    value={courseDraft.code}
+                    onChange={(event) =>
+                      setCourseDraft((current) => ({
+                        ...current,
+                        code: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  Course name
+                  <input
+                    value={courseDraft.name}
+                    onChange={(event) =>
+                      setCourseDraft((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="full-span">
+                  Course instructor
+                  <input
+                    value={courseDraft.instructor}
+                    onChange={(event) =>
+                      setCourseDraft((current) => ({
+                        ...current,
+                        instructor: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+              <div className="button-row top-space">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() =>
+                    saveCourse(courseDraft.code, courseDraft.name, courseDraft.instructor)
+                  }
+                >
+                  Save course
+                </button>
+              </div>
+            </Panel>
+          </div>
+          <Panel
+            title="Course link requests"
+            subtitle="Approve or reject instructor link and unlink requests"
+          >
+            <div className="stack-list">
+              {courseLinkRequests.map((request) => (
+                <article key={request.id} className="list-card">
+                  <div className="list-card-head">
+                    <div>
+                      <strong>
+                        {request.courseCode} · {request.courseName}
+                      </strong>
+                      <span>
+                        {request.instructor} · {request.action}
+                      </span>
+                    </div>
+                    <Badge
+                      tone={
+                        request.status === 'Approved'
+                          ? 'success'
+                          : request.status === 'Rejected'
+                          ? 'warn'
+                          : 'accent'
+                      }
+                    >
+                      {request.status}
+                    </Badge>
+                  </div>
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => resolveCourseLinkRequest(request.id, 'Approved')}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button danger"
+                      onClick={() => resolveCourseLinkRequest(request.id, 'Rejected')}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </Panel>
         </div>
       );
     case 'analytics':

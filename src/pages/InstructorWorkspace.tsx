@@ -5,20 +5,33 @@ import {
   type Course,
   type InstructorProfile,
   type NotificationItem,
+  type PortfolioCard,
   type Project,
+  type Role,
 } from '../mockData';
 import { Badge, PageHeader, Panel, StatCard } from '../components/ui';
+import { DiscoveryHub } from '../components/DiscoveryHub';
 import { InboxPage } from './InboxPage';
 import { NotificationsPage } from './NotificationsPage';
 
 type InstructorWorkspaceProps = {
   currentPage: WorkspacePage;
+  role: Role;
   instructorProfile: InstructorProfile;
   setInstructorProfile: React.Dispatch<React.SetStateAction<InstructorProfile>>;
   saveInstructorProfile: () => void;
   courses: Course[];
   toggleCourseLink: (code: string) => void;
+  courseLinkRequests: Array<{
+    id: string;
+    courseCode: string;
+    courseName: string;
+    instructor: string;
+    action: 'Link' | 'Unlink';
+    status: 'Pending' | 'Approved' | 'Rejected';
+  }>;
   projects: Project[];
+  portfolios: PortfolioCard[];
   reviewDrafts: Record<string, string>;
   setReviewDrafts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   addReviewComment: (projectId: string) => void;
@@ -41,12 +54,15 @@ type InstructorWorkspaceProps = {
 
 export function InstructorWorkspace({
   currentPage,
+  role,
   instructorProfile,
   setInstructorProfile,
   saveInstructorProfile,
   courses,
   toggleCourseLink,
+  courseLinkRequests,
   projects,
+  portfolios,
   reviewDrafts,
   setReviewDrafts,
   addReviewComment,
@@ -125,6 +141,7 @@ export function InstructorWorkspace({
               </div>
             </Panel>
           </div>
+          <DiscoveryHub role={role} projects={projects} portfolios={portfolios} />
         </div>
       );
     case 'profile':
@@ -245,7 +262,7 @@ export function InstructorWorkspace({
                     disabled={course.code === 'BP401'}
                     onClick={() => toggleCourseLink(course.code)}
                   >
-                    {course.linked ? 'Unlink' : 'Link'}
+                    {course.linked ? 'Request unlink' : 'Request link'}
                   </button>
                   {course.code === 'BP401' ? (
                     <Badge tone="accent">Auto-linked Bachelor Project</Badge>
@@ -254,6 +271,33 @@ export function InstructorWorkspace({
               </article>
             ))}
           </div>
+          <Panel title="Link requests" subtitle="Requests waiting for administrator approval">
+            <div className="stack-list">
+              {courseLinkRequests.map((request) => (
+                <article key={request.id} className="list-card">
+                  <div className="list-card-head">
+                    <div>
+                      <strong>
+                        {request.courseCode} · {request.courseName}
+                      </strong>
+                      <span>{request.action} request</span>
+                    </div>
+                    <Badge
+                      tone={
+                        request.status === 'Approved'
+                          ? 'success'
+                          : request.status === 'Rejected'
+                          ? 'warn'
+                          : 'accent'
+                      }
+                    >
+                      {request.status}
+                    </Badge>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </Panel>
         </div>
       );
     case 'reviews':

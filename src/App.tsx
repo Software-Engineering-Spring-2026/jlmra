@@ -44,6 +44,17 @@ type InternshipDraft = {
 };
 
 type FontScale = 'small' | 'medium' | 'large';
+type CourseLinkRequestStatus = 'Pending' | 'Approved' | 'Rejected';
+type CourseLinkRequestAction = 'Link' | 'Unlink';
+
+type CourseLinkRequest = {
+  id: string;
+  courseCode: string;
+  courseName: string;
+  instructor: string;
+  action: CourseLinkRequestAction;
+  status: CourseLinkRequestStatus;
+};
 
 const emptyInternshipDraft: InternshipDraft = {
   title: '',
@@ -126,10 +137,32 @@ function App() {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [internships, setInternships] = useState<Internship[]>(initialInternships);
   const [portfolios] = useState<PortfolioCard[]>(initialPortfolios);
+  const [favoriteProjectIdsByRole, setFavoriteProjectIdsByRole] = useState<
+    Record<'student' | 'employer', string[]>
+  >({
+    student: ['project-1'],
+    employer: ['project-3'],
+  });
+  const [favoritePortfolioIdsByRole, setFavoritePortfolioIdsByRole] = useState<
+    Record<'student' | 'employer', string[]>
+  >({
+    student: ['portfolio-2'],
+    employer: ['portfolio-1'],
+  });
   const [companyRequests, setCompanyRequests] =
     useState<CompanyRequest[]>(initialCompanyRequests);
   const [users, setUsers] = useState<UserAccount[]>(initialUsers);
   const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [courseLinkRequests, setCourseLinkRequests] = useState<CourseLinkRequest[]>([
+    {
+      id: 'link-request-1',
+      courseCode: 'CSEN 703',
+      courseName: 'Frontend Product Engineering',
+      instructor: 'Dr. Maya El-Adl',
+      action: 'Link',
+      status: 'Pending',
+    },
+  ]);
   const [appeals, setAppeals] = useState<Appeal[]>(initialAppeals);
   const [notifications, setNotifications] =
     useState<NotificationItem[]>(initialNotifications);
@@ -155,6 +188,7 @@ function App() {
   const [editingInternshipId, setEditingInternshipId] = useState<string | null>(
     null
   );
+  const [inactiveProjectIds, setInactiveProjectIds] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -213,6 +247,14 @@ function App() {
     0
   );
   const appFontSize = fontSizeByScale[fontScale];
+  const favoriteProjectIds =
+    session && (session.role === 'student' || session.role === 'employer')
+      ? favoriteProjectIdsByRole[session.role]
+      : [];
+  const favoritePortfolioIds =
+    session && (session.role === 'student' || session.role === 'employer')
+      ? favoritePortfolioIdsByRole[session.role]
+      : [];
 
   const navigateToPage = useCallback(
     (page: WorkspacePage, conversationId: string | null = null) => {
@@ -377,6 +419,27 @@ function App() {
       message: 'The selected project is now highlighted on the student profile.',
       audience: ['student'],
     });
+  };
+
+  const toggleProjectFavorite = (role: 'student' | 'employer', projectId: string) => {
+    setFavoriteProjectIdsByRole((current) => ({
+      ...current,
+      [role]: current[role].includes(projectId)
+        ? current[role].filter((id) => id !== projectId)
+        : [projectId, ...current[role]],
+    }));
+  };
+
+  const togglePortfolioFavorite = (
+    role: 'student' | 'employer',
+    portfolioId: string
+  ) => {
+    setFavoritePortfolioIdsByRole((current) => ({
+      ...current,
+      [role]: current[role].includes(portfolioId)
+        ? current[role].filter((id) => id !== portfolioId)
+        : [portfolioId, ...current[role]],
+    }));
   };
 
   const addTaskToProject = (projectId: string) => {
@@ -649,24 +712,76 @@ function App() {
     if (!targetCourse) {
       return;
     }
-
-    const nextLinked = !targetCourse.linked;
-    setCourses((current) =>
-      current.map((course) =>
-        course.code === code ? { ...course, linked: nextLinked } : course
-      )
+    const nextAction: CourseLinkRequestAction = targetCourse.linked ? 'Unlink' : 'Link';
+    const alreadyPending = courseLinkRequests.some(
+      (request) =>
+        request.courseCode === code &&
+        request.instructor === instructorProfile.name &&
+        request.status === 'Pending'
     );
-    setInstructorProfile((current) => ({
+
+    if (alreadyPending) {
+      return;
+    }
+
+    setCourseLinkRequests((current) => [
+      {
+        id: createId('link-request'),
+        courseCode: targetCourse.code,
+        courseName: targetCourse.name,
+        instructor: instructorProfile.name,
+        action: nextAction,
+        status: 'Pending',
+      },
       ...current,
-      linkedCourses: nextLinked
-        ? [...current.linkedCourses, targetCourse.name]
-        : current.linkedCourses.filter((courseName) => courseName !== targetCourse.name),
-    }));
+    ]);
 
     addNotification({
-      title: nextLinked ? 'Course linked' : 'Course unlinked',
-      message: `${targetCourse.name} was ${nextLinked ? 'linked' : 'unlinked'} successfully.`,
+      title: `${nextAction} request sent`,
+      message: `${targetCourse.name} is waiting for administrator approval.`,
       audience: ['instructor', 'admin'],
+    });
+  };
+
+  const resolveCourseLinkRequest = (
+    requestId: string,
+    nextStatus: CourseLinkRequestStatus
+  ) => {
+    const targetRequest = courseLinkRequests.find((request) => request.id === requestId);
+    if (!targetRequest) {
+      return;
+    }
+
+    setCourseLinkRequests((current) =>
+      current.map((request) =>
+        request.id === requestId ? { ...request, status: nextStatus } : request
+      )
+    );
+
+    if (nextStatus === 'Approved') {
+      const nextLinked = targetRequest.action === 'Link';
+      setCourses((current) =>
+        current.map((course) =>
+          course.code === targetRequest.courseCode
+            ? { ...course, linked: nextLinked }
+            : course
+        )
+      );
+      setInstructorProfile((current) => ({
+        ...current,
+        linkedCourses: nextLinked
+          ? Array.from(new Set([...current.linkedCourses, targetRequest.courseName]))
+          : current.linkedCourses.filter(
+              (courseName) => courseName !== targetRequest.courseName
+            ),
+      }));
+    }
+
+    addNotification({
+      title: `Course request ${nextStatus.toLowerCase()}`,
+      message: `${targetRequest.courseName} was ${nextStatus.toLowerCase()} by the administrator.`,
+      audience: ['admin', 'instructor'],
+      tone: nextStatus === 'Rejected' ? 'warn' : 'accent',
     });
   };
 
@@ -731,6 +846,9 @@ function App() {
       },
       ...current,
     ]);
+    setInactiveProjectIds((current) =>
+      current.includes(projectId) ? current : [projectId, ...current]
+    );
 
     addNotification({
       title: 'Project flagged',
@@ -776,6 +894,17 @@ function App() {
         appeal.id === appealId ? { ...appeal, status: 'Resolved' } : appeal
       )
     );
+    const targetAppeal = appeals.find((appeal) => appeal.id === appealId);
+    if (targetAppeal) {
+      const matchingProject = projects.find(
+        (project) => project.title === targetAppeal.projectTitle
+      );
+      if (matchingProject) {
+        setInactiveProjectIds((current) =>
+          current.filter((projectId) => projectId !== matchingProject.id)
+        );
+      }
+    }
   };
 
   const toggleUserStatus = (userId: string) => {
@@ -788,6 +917,68 @@ function App() {
             }
           : user
       )
+    );
+  };
+
+  const createAdminAccount = (name: string, email: string) => {
+    if (!name.trim() || !email.trim()) {
+      return;
+    }
+
+    setUsers((current) => [
+      {
+        id: createId('user'),
+        name: name.trim(),
+        email: email.trim(),
+        role: 'admin',
+        status: 'Active',
+      },
+      ...current,
+    ]);
+  };
+
+  const saveCourse = (code: string, name: string, instructor: string) => {
+    if (!code.trim() || !name.trim() || !instructor.trim()) {
+      return;
+    }
+
+    const normalizedCode = code.trim().toUpperCase();
+
+    setCourses((current) => {
+      const exists = current.some((course) => course.code === normalizedCode);
+      if (exists) {
+        return current.map((course) =>
+          course.code === normalizedCode
+            ? { ...course, name: name.trim(), instructor: instructor.trim() }
+            : course
+        );
+      }
+
+      return [
+        {
+          code: normalizedCode,
+          name: name.trim(),
+          instructor: instructor.trim(),
+          linked: false,
+        },
+        ...current,
+      ];
+    });
+  };
+
+  const deleteCourse = (code: string) => {
+    if (code === 'BP401') {
+      return;
+    }
+
+    setCourses((current) => current.filter((course) => course.code !== code));
+  };
+
+  const toggleProjectActive = (projectId: string) => {
+    setInactiveProjectIds((current) =>
+      current.includes(projectId)
+        ? current.filter((id) => id !== projectId)
+        : [projectId, ...current]
     );
   };
 
@@ -883,9 +1074,19 @@ function App() {
         return (
           <StudentWorkspace
             currentPage={currentPage}
+            role="student"
             studentProfile={studentProfile}
             setStudentProfile={setStudentProfile}
             projects={projects}
+            portfolios={portfolios}
+            favoriteProjectIds={favoriteProjectIds}
+            favoritePortfolioIds={favoritePortfolioIds}
+            onToggleProjectFavorite={(projectId) =>
+              toggleProjectFavorite('student', projectId)
+            }
+            onTogglePortfolioFavorite={(portfolioId) =>
+              togglePortfolioFavorite('student', portfolioId)
+            }
             featuredProject={featuredProject}
             internships={studentInternships}
             internshipQuery={studentInternshipQuery}
@@ -914,6 +1115,7 @@ function App() {
         return (
           <EmployerWorkspace
             currentPage={currentPage}
+            role="employer"
             employerProfile={employerProfile}
             setEmployerProfile={setEmployerProfile}
             saveEmployerProfile={saveEmployerProfile}
@@ -928,6 +1130,15 @@ function App() {
             toggleInternshipStatus={toggleInternshipStatus}
             deleteInternship={deleteInternship}
             portfolios={portfolios}
+            projects={projects}
+            favoriteProjectIds={favoriteProjectIds}
+            favoritePortfolioIds={favoritePortfolioIds}
+            onToggleProjectFavorite={(projectId) =>
+              toggleProjectFavorite('employer', projectId)
+            }
+            onTogglePortfolioFavorite={(portfolioId) =>
+              togglePortfolioFavorite('employer', portfolioId)
+            }
             setCurrentPage={navigateToPage}
             updateApplicantStatus={updateApplicantStatus}
             {...sharedMessageProps}
@@ -943,12 +1154,15 @@ function App() {
         return (
           <InstructorWorkspace
             currentPage={currentPage}
+            role="instructor"
             instructorProfile={instructorProfile}
             setInstructorProfile={setInstructorProfile}
             saveInstructorProfile={saveInstructorProfile}
             courses={courses}
             toggleCourseLink={toggleCourseLink}
+            courseLinkRequests={courseLinkRequests}
             projects={projects}
+            portfolios={portfolios}
             reviewDrafts={reviewDrafts}
             setReviewDrafts={setReviewDrafts}
             addReviewComment={addReviewComment}
@@ -969,16 +1183,25 @@ function App() {
         return (
           <AdminWorkspace
             currentPage={currentPage}
+            role="admin"
             companyRequests={companyRequests}
             updateCompanyRequest={updateCompanyRequest}
             appeals={appeals}
             resolveAppeal={resolveAppeal}
             users={users}
             toggleUserStatus={toggleUserStatus}
+            createAdminAccount={createAdminAccount}
             courses={courses}
+            saveCourse={saveCourse}
+            deleteCourse={deleteCourse}
+            courseLinkRequests={courseLinkRequests}
+            resolveCourseLinkRequest={resolveCourseLinkRequest}
             projects={projects}
+            portfolios={portfolios}
             featuredProject={featuredProject}
             instructorProfile={instructorProfile}
+            inactiveProjectIds={inactiveProjectIds}
+            toggleProjectActive={toggleProjectActive}
             setCurrentPage={navigateToPage}
             {...sharedMessageProps}
             notifications={sharedNotificationProps.notifications}

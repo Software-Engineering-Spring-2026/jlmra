@@ -1,21 +1,30 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { type WorkspacePage } from '../appConfig';
 import {
   type Conversation,
   type Internship,
   type NotificationItem,
+  type PortfolioCard,
   type Project,
+  type Role,
   type StudentProfile,
 } from '../mockData';
 import { Badge, PageHeader, Panel, StatCard } from '../components/ui';
+import { DiscoveryHub } from '../components/DiscoveryHub';
 import { InboxPage } from './InboxPage';
 import { NotificationsPage } from './NotificationsPage';
 
 type StudentWorkspaceProps = {
   currentPage: WorkspacePage;
+  role: Role;
   studentProfile: StudentProfile;
   setStudentProfile: React.Dispatch<React.SetStateAction<StudentProfile>>;
   projects: Project[];
+  portfolios: PortfolioCard[];
+  favoriteProjectIds: string[];
+  favoritePortfolioIds: string[];
+  onToggleProjectFavorite: (projectId: string) => void;
+  onTogglePortfolioFavorite: (portfolioId: string) => void;
   featuredProject: Project;
   internships: Internship[];
   internshipQuery: string;
@@ -46,9 +55,15 @@ type StudentWorkspaceProps = {
 
 export function StudentWorkspace({
   currentPage,
+  role,
   studentProfile,
   setStudentProfile,
   projects,
+  portfolios,
+  favoriteProjectIds,
+  favoritePortfolioIds,
+  onToggleProjectFavorite,
+  onTogglePortfolioFavorite,
   featuredProject,
   internships,
   internshipQuery,
@@ -76,6 +91,55 @@ export function StudentWorkspace({
   onToggleNotificationsEnabled,
   onToggleNotificationRead,
 }: StudentWorkspaceProps) {
+  const [companyFilter, setCompanyFilter] = useState('All');
+  const [durationFilter, setDurationFilter] = useState('All');
+  const [internshipSort, setInternshipSort] = useState<'newest' | 'oldest'>('newest');
+  const languageBreakdown = useMemo(() => {
+    const total = projects.flatMap((project) => project.languages).length || 1;
+    const counts = projects
+      .flatMap((project) => project.languages)
+      .reduce<Record<string, number>>((accumulator, language) => {
+        accumulator[language] = (accumulator[language] ?? 0) + 1;
+        return accumulator;
+      }, {});
+
+    return Object.entries(counts).map(([language, count]) => ({
+      language,
+      percentage: Math.round((count / total) * 100),
+    }));
+  }, [projects]);
+  const topCollaborators = useMemo(() => {
+    const counts = projects.flatMap((project) => project.collaborators).reduce<Record<string, number>>(
+      (accumulator, collaborator) => {
+        accumulator[collaborator] = (accumulator[collaborator] ?? 0) + 1;
+        return accumulator;
+      },
+      {}
+    );
+
+    return Object.entries(counts)
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 3);
+  }, [projects]);
+  const filteredInternships = useMemo(() => {
+    const items = internships.filter((internship) => {
+      const matchesCompany =
+        companyFilter === 'All' || internship.companyName === companyFilter;
+      const matchesDuration =
+        durationFilter === 'All' || internship.duration === durationFilter;
+
+      return matchesCompany && matchesDuration;
+    });
+
+    return [...items].sort((left, right) =>
+      internshipSort === 'newest'
+        ? Date.parse(right.postedOn) - Date.parse(left.postedOn)
+        : Date.parse(left.postedOn) - Date.parse(right.postedOn)
+    );
+  }, [companyFilter, durationFilter, internshipSort, internships]);
+  const internshipCompanies = ['All', ...Array.from(new Set(internships.map((item) => item.companyName)))];
+  const internshipDurations = ['All', ...Array.from(new Set(internships.map((item) => item.duration)))];
+
   switch (currentPage) {
     case 'dashboard':
       return (
@@ -151,6 +215,49 @@ export function StudentWorkspace({
               </div>
             </Panel>
           </div>
+          <div className="content-grid">
+            <Panel title="Project statistics" subtitle="Total projects and language usage across the portfolio">
+              <div className="simple-list">
+                <div className="simple-list-item">
+                  <strong>Total projects</strong>
+                  <span>{projects.length}</span>
+                </div>
+                {languageBreakdown.map((item) => (
+                  <div key={item.language} className="simple-list-item">
+                    <strong>{item.language}</strong>
+                    <span>{item.percentage}% of overall project stack usage</span>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+            <Panel title="Top collaborators and completed internships" subtitle="Student-level portfolio insights">
+              <div className="simple-list">
+                {topCollaborators.map(([name, count]) => (
+                  <div key={name} className="simple-list-item">
+                    <strong>{name}</strong>
+                    <span>{count} shared project(s)</span>
+                  </div>
+                ))}
+                {internships
+                  .filter((internship) => internship.applicationStatus === 'Completed')
+                  .map((internship) => (
+                    <div key={internship.id} className="simple-list-item">
+                      <strong>{internship.title}</strong>
+                      <span>Completed with {internship.companyName}</span>
+                    </div>
+                  ))}
+              </div>
+            </Panel>
+          </div>
+          <DiscoveryHub
+            role={role}
+            projects={projects}
+            portfolios={portfolios}
+            favoriteProjectIds={favoriteProjectIds}
+            favoritePortfolioIds={favoritePortfolioIds}
+            onToggleProjectFavorite={onToggleProjectFavorite}
+            onTogglePortfolioFavorite={onTogglePortfolioFavorite}
+          />
         </div>
       );
     case 'portfolio':
@@ -385,6 +492,32 @@ export function StudentWorkspace({
                   placeholder="Frontend, Cairo, Hybrid, 8 weeks"
                 />
               </label>
+              <label>
+                Company
+                <select
+                  value={companyFilter}
+                  onChange={(event) => setCompanyFilter(event.target.value)}
+                >
+                  {internshipCompanies.map((company) => (
+                    <option key={company} value={company}>
+                      {company}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Duration
+                <select
+                  value={durationFilter}
+                  onChange={(event) => setDurationFilter(event.target.value)}
+                >
+                  {internshipDurations.map((duration) => (
+                    <option key={duration} value={duration}>
+                      {duration}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="full-span">
                 Cover letter
                 <textarea
@@ -394,9 +527,25 @@ export function StudentWorkspace({
                 />
               </label>
             </div>
+            <div className="button-row top-space">
+              <button
+                type="button"
+                className={`ghost-button ${internshipSort === 'newest' ? 'active' : ''}`}
+                onClick={() => setInternshipSort('newest')}
+              >
+                Newest first
+              </button>
+              <button
+                type="button"
+                className={`ghost-button ${internshipSort === 'oldest' ? 'active' : ''}`}
+                onClick={() => setInternshipSort('oldest')}
+              >
+                Oldest first
+              </button>
+            </div>
           </Panel>
           <div className="stack-list">
-            {internships.map((internship) => (
+            {filteredInternships.map((internship) => (
               <article key={internship.id} className="project-card">
                 <div className="list-card-head">
                   <div>
