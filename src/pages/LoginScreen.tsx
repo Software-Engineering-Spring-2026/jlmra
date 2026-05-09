@@ -189,10 +189,6 @@ export function LoginScreen({
             </div>
 
             {loginError ? <div className="error-banner">{loginError}</div> : null}
-            <div className="error-examples">
-              Examples: wrong email, wrong password, or wrong OTP will show a red
-              message here.
-            </div>
 
             <button type="submit" className="primary-button wide-button">
               <Icon name="key" />

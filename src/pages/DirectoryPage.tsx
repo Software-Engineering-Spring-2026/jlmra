@@ -7,6 +7,7 @@ import {
   type Role,
   roleMeta,
 } from '../mockData';
+import { Icon } from '../components/icons';
 import { Badge, PageHeader, Panel } from '../components/ui';
 
 type DirectoryPageProps = {
@@ -16,6 +17,8 @@ type DirectoryPageProps = {
   portfolios: PortfolioCard[];
   projects: Project[];
 };
+
+type DirectoryTab = 'instructors' | 'projects' | 'portfolios' | 'recommended' | 'favorites';
 
 type InstructorCard = {
   name: string;
@@ -29,6 +32,40 @@ const getProjectInstructor = (project: Project, courses: Course[]) =>
   courses.find((course) => course.name === project.course || course.code === project.course)
     ?.instructor ?? 'Jana Hassan';
 
+const roleTabs: Record<Role, DirectoryTab[]> = {
+  student: ['projects', 'portfolios', 'instructors', 'recommended', 'favorites'],
+  employer: ['portfolios', 'projects', 'instructors', 'recommended', 'favorites'],
+  instructor: ['projects', 'portfolios', 'instructors', 'recommended'],
+  admin: ['projects', 'portfolios', 'instructors'],
+};
+
+const tabLabels: Record<DirectoryTab, string> = {
+  instructors: 'Instructors',
+  projects: 'Projects',
+  portfolios: 'Portfolios',
+  recommended: 'Recommended',
+  favorites: 'Favorites',
+};
+
+const directoryTitles: Record<Role, { title: string; description: string }> = {
+  student: {
+    title: 'Explore',
+    description: 'Find projects, student portfolios, instructors, and favorites.',
+  },
+  employer: {
+    title: 'Talent',
+    description: 'Find student portfolios, strong projects, and instructors.',
+  },
+  instructor: {
+    title: 'Browse',
+    description: 'Find projects, portfolios, and linked course instructors.',
+  },
+  admin: {
+    title: 'Records',
+    description: 'Search platform projects, student portfolios, and instructors.',
+  },
+};
+
 export function DirectoryPage({
   role,
   courses,
@@ -36,6 +73,8 @@ export function DirectoryPage({
   portfolios,
   projects,
 }: DirectoryPageProps) {
+  const tabs = roleTabs[role];
+  const [activeTab, setActiveTab] = useState<DirectoryTab>(tabs[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('All');
   const [portfolioMajor, setPortfolioMajor] = useState('All');
@@ -53,7 +92,10 @@ export function DirectoryPage({
   );
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const projectCourseOptions = ['All', ...Array.from(new Set(projects.map((project) => project.course)))];
+  const projectCourseOptions = [
+    'All',
+    ...Array.from(new Set(projects.map((project) => project.course))),
+  ];
   const portfolioMajorOptions = [
     'All',
     ...Array.from(new Set(portfolios.map((portfolio) => portfolio.major))),
@@ -64,7 +106,7 @@ export function DirectoryPage({
   ).map((name) => {
     const linkedCourses = courses
       .filter((course) => course.instructor === name || name === instructorProfile.name)
-      .map((course) => `${course.code} · ${course.name}`);
+      .map((course) => `${course.code} - ${course.name}`);
     const emailSlug = name.toLowerCase().replace(/^dr\.\s*/, '').split(' ').join('.');
 
     return {
@@ -81,7 +123,7 @@ export function DirectoryPage({
         name === instructorProfile.name
           ? instructorProfile.education
           : 'GUC course instructor',
-      courses: linkedCourses.length > 0 ? linkedCourses : ['BP401 · Bachelor Project'],
+      courses: linkedCourses.length > 0 ? linkedCourses : ['BP401 - Bachelor Project'],
     };
   });
 
@@ -92,7 +134,9 @@ export function DirectoryPage({
       .includes(normalizedSearch);
     const matchesCourse =
       courseFilter === 'All' ||
-      instructor.courses.some((course) => course.toLowerCase().includes(courseFilter.toLowerCase()));
+      instructor.courses.some((course) =>
+        course.toLowerCase().includes(courseFilter.toLowerCase())
+      );
 
     return matchesSearch && matchesCourse;
   });
@@ -166,21 +210,34 @@ export function DirectoryPage({
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack directory-page">
       <PageHeader
         eyebrow={roleMeta[role].label}
-        title="Directory"
-        description="Search projects, portfolios, and instructors."
+        title={directoryTitles[role].title}
+        description={directoryTitles[role].description}
       />
 
-      <Panel title="Search and filters" subtitle="Grouped controls">
-        <div className="form-grid">
-          <label className="full-span">
+      <section className="directory-control-panel">
+        <div className="directory-tabs" aria-label="Directory sections">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              className={`directory-tab ${activeTab === tab ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tabLabels[tab]}
+            </button>
+          ))}
+        </div>
+
+        <div className="directory-filters">
+          <label className="directory-search">
             Search
             <input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Project title, student email, instructor, skill"
+              placeholder="Search by title, email, instructor, course, skill"
             />
           </label>
           <label>
@@ -205,7 +262,7 @@ export function DirectoryPage({
             </select>
           </label>
           <label>
-            Portfolio major
+            Major
             <select
               value={portfolioMajor}
               onChange={(event) => setPortfolioMajor(event.target.value)}
@@ -216,214 +273,234 @@ export function DirectoryPage({
             </select>
           </label>
         </div>
-      </Panel>
+      </section>
 
-      <div className="content-grid content-grid-wide">
-        <Panel title="Course instructors" subtitle="Search by name or course">
-          <div className="stack-list">
-            {filteredInstructors.map((instructor) => (
-              <article key={instructor.email} className="list-card">
-                <div className="list-card-head">
-                  <div>
-                    <strong>{instructor.name}</strong>
-                    <span>{instructor.email}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => setSelectedInstructorName(instructor.name)}
-                  >
-                    View Profile
-                  </button>
-                </div>
+      {activeTab === 'instructors' ? (
+        <div className="directory-layout">
+          <Panel title="Course instructors" subtitle="Search by name or course">
+            <div className="stack-list">
+              {filteredInstructors.map((instructor) => (
+                <button
+                  key={instructor.email}
+                  type="button"
+                  className={`directory-result ${
+                    selectedInstructor?.name === instructor.name ? 'active' : ''
+                  }`}
+                  onClick={() => setSelectedInstructorName(instructor.name)}
+                >
+                  <strong>{instructor.name}</strong>
+                  <span>{instructor.email}</span>
+                </button>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel title="Instructor details" subtitle="Linked courses and profile">
+            {selectedInstructor ? (
+              <div className="details-card">
+                <strong>{selectedInstructor.name}</strong>
+                <span>{selectedInstructor.email}</span>
+                <p>{selectedInstructor.bio}</p>
                 <div className="tag-row">
-                  {instructor.courses.slice(0, 3).map((course) => (
+                  {selectedInstructor.courses.map((course) => (
                     <Badge key={course}>{course}</Badge>
                   ))}
                 </div>
-              </article>
-            ))}
-          </div>
-        </Panel>
+              </div>
+            ) : null}
+          </Panel>
+        </div>
+      ) : null}
 
-        <Panel title="Instructor profile" subtitle="Selected details">
-          {selectedInstructor ? (
-            <div className="simple-list">
-              <div className="simple-list-item">
-                <strong>{selectedInstructor.name}</strong>
-                <span>{selectedInstructor.email}</span>
-              </div>
-              <div className="simple-list-item">
-                <strong>Education</strong>
-                <span>{selectedInstructor.education}</span>
-              </div>
-              <div className="simple-list-item">
-                <strong>Biography</strong>
-                <span>{selectedInstructor.bio}</span>
-              </div>
+      {activeTab === 'projects' ? (
+        <div className="directory-layout">
+          <Panel title="Project results" subtitle="Search, filter, sort, and select">
+            <div className="stack-list">
+              {filteredProjects.map((project) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  className={`directory-result ${
+                    selectedProject?.id === project.id ? 'active' : ''
+                  }`}
+                  onClick={() => setSelectedProjectId(project.id)}
+                >
+                  <strong>{project.title}</strong>
+                  <span>
+                    {project.course} - {getProjectInstructor(project, courses)} -{' '}
+                    {project.rating.toFixed(1)}/5
+                  </span>
+                </button>
+              ))}
             </div>
-          ) : null}
-        </Panel>
-      </div>
+          </Panel>
 
-      <div className="content-grid content-grid-wide">
-        <Panel title="Project results" subtitle="Search, filter, sort, view, favorite">
-          <div className="stack-list">
-            {filteredProjects.map((project) => (
-              <article key={project.id} className="list-card">
-                <div className="list-card-head">
-                  <div>
-                    <strong>{project.title}</strong>
-                    <span>
-                      {project.course} · {getProjectInstructor(project, courses)} ·{' '}
-                      {project.createdAt}
-                    </span>
-                  </div>
-                  <Badge tone="accent">{project.rating.toFixed(1)}/5</Badge>
-                </div>
-                <div className="button-row">
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => setSelectedProjectId(project.id)}
-                  >
-                    View Project
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => toggleFavoriteProject(project.id)}
-                  >
-                    {favoriteProjectIds.includes(project.id) ? '⭐ Saved' : '⭐ Favorite'}
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </Panel>
-
-        <Panel title="Selected project" subtitle="Project details">
-          {selectedProject ? (
-            <div className="simple-list">
-              <div className="simple-list-item">
+          <Panel title="Project details" subtitle="Selected project">
+            {selectedProject ? (
+              <div className="details-card">
                 <strong>{selectedProject.title}</strong>
                 <span>
-                  {selectedProject.course} · {selectedProject.visibility} ·{' '}
+                  {selectedProject.course} - {selectedProject.visibility} -{' '}
                   {selectedProject.status}
                 </span>
-              </div>
-              <div className="simple-list-item">
-                <strong>GitHub</strong>
-                <span>{selectedProject.github}</span>
-              </div>
-              <div className="simple-list-item">
-                <strong>Languages</strong>
-                <span>{selectedProject.languages.join(', ')}</span>
-              </div>
-              <div className="simple-list-item">
-                <strong>Demo video</strong>
-                <span>{selectedProject.demoVideoUrl}</span>
-              </div>
-            </div>
-          ) : null}
-        </Panel>
-      </div>
-
-      <div className="content-grid content-grid-wide">
-        <Panel title="Portfolio results" subtitle="Search, filter, sort, view, favorite">
-          <div className="stack-list">
-            {filteredPortfolios.map((portfolio) => (
-              <article key={portfolio.id} className="list-card">
-                <div className="list-card-head">
-                  <div>
-                    <strong>{portfolio.name}</strong>
-                    <span>
-                      {portfolio.email} · {portfolio.major} · {portfolio.projectsCount}{' '}
-                      projects
-                    </span>
+                <div className="simple-list">
+                  <div className="simple-list-item">
+                    <strong>GitHub</strong>
+                    <span>{selectedProject.github}</span>
                   </div>
-                  <Badge tone="success">{portfolio.rating.toFixed(1)}/5</Badge>
+                  <div className="simple-list-item">
+                    <strong>Languages</strong>
+                    <span>{selectedProject.languages.join(', ')}</span>
+                  </div>
+                  <div className="simple-list-item">
+                    <strong>Demo video</strong>
+                    <span>{selectedProject.demoVideoUrl}</span>
+                  </div>
                 </div>
-                <div className="button-row">
+                {role === 'student' || role === 'employer' ? (
                   <button
                     type="button"
-                    className="ghost-button"
-                    onClick={() => setSelectedPortfolioId(portfolio.id)}
+                    className="ghost-button favorite-button"
+                    onClick={() => toggleFavoriteProject(selectedProject.id)}
                   >
-                    View Portfolio
+                    <Icon name="star" />
+                    {favoriteProjectIds.includes(selectedProject.id)
+                      ? 'Remove from favorites'
+                      : 'Save to favorites'}
                   </button>
+                ) : null}
+              </div>
+            ) : null}
+          </Panel>
+        </div>
+      ) : null}
+
+      {activeTab === 'portfolios' ? (
+        <div className="directory-layout">
+          <Panel title="Student portfolios" subtitle="Search by student, major, or skill">
+            <div className="stack-list">
+              {filteredPortfolios.map((portfolio) => (
+                <button
+                  key={portfolio.id}
+                  type="button"
+                  className={`directory-result ${
+                    selectedPortfolio?.id === portfolio.id ? 'active' : ''
+                  }`}
+                  onClick={() => setSelectedPortfolioId(portfolio.id)}
+                >
+                  <strong>{portfolio.name}</strong>
+                  <span>
+                    {portfolio.major} - {portfolio.projectsCount} projects -{' '}
+                    {portfolio.rating.toFixed(1)}/5
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel title="Portfolio details" subtitle="Selected student portfolio">
+            {selectedPortfolio ? (
+              <div className="details-card">
+                <strong>{selectedPortfolio.name}</strong>
+                <span>{selectedPortfolio.email}</span>
+                <div className="simple-list">
+                  <div className="simple-list-item">
+                    <strong>Major</strong>
+                    <span>{selectedPortfolio.major}</span>
+                  </div>
+                  <div className="simple-list-item">
+                    <strong>Skills</strong>
+                    <span>{selectedPortfolio.topSkills.join(', ')}</span>
+                  </div>
+                  <div className="simple-list-item">
+                    <strong>Featured project</strong>
+                    <span>{selectedPortfolio.featuredProject}</span>
+                  </div>
+                </div>
+                {role === 'student' || role === 'employer' ? (
                   <button
                     type="button"
-                    className="ghost-button"
-                    onClick={() => toggleFavoritePortfolio(portfolio.id)}
+                    className="ghost-button favorite-button"
+                    onClick={() => toggleFavoritePortfolio(selectedPortfolio.id)}
                   >
-                    {favoritePortfolioIds.includes(portfolio.id)
-                      ? '⭐ Saved'
-                      : '⭐ Favorite'}
+                    <Icon name="star" />
+                    {favoritePortfolioIds.includes(selectedPortfolio.id)
+                      ? 'Remove from favorites'
+                      : 'Save to favorites'}
                   </button>
-                </div>
+                ) : null}
+              </div>
+            ) : null}
+          </Panel>
+        </div>
+      ) : null}
+
+      {activeTab === 'recommended' ? (
+        <Panel title="Recommended projects" subtitle="High-rated and featured work">
+          <div className="directory-card-grid">
+            {recommendedProjects.map((project) => (
+              <article key={project.id} className="directory-mini-card">
+                <strong>{project.title}</strong>
+                <span>
+                  {project.course} - {project.rating.toFixed(1)}/5
+                </span>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => {
+                    setSelectedProjectId(project.id);
+                    setActiveTab('projects');
+                  }}
+                >
+                  View Project
+                </button>
               </article>
             ))}
           </div>
         </Panel>
+      ) : null}
 
-        <Panel title="Selected portfolio" subtitle="Portfolio details">
-          {selectedPortfolio ? (
-            <div className="simple-list">
-              <div className="simple-list-item">
-                <strong>{selectedPortfolio.name}</strong>
-                <span>{selectedPortfolio.email}</span>
-              </div>
-              <div className="simple-list-item">
-                <strong>Major</strong>
-                <span>{selectedPortfolio.major}</span>
-              </div>
-              <div className="simple-list-item">
-                <strong>Skills</strong>
-                <span>{selectedPortfolio.topSkills.join(', ')}</span>
-              </div>
-              <div className="simple-list-item">
-                <strong>Featured project</strong>
-                <span>{selectedPortfolio.featuredProject}</span>
-              </div>
+      {activeTab === 'favorites' ? (
+        <div className="directory-layout">
+          <Panel title="Favorite projects" subtitle="Saved project list">
+            <div className="stack-list">
+              {favoriteProjects.map((project) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  className="directory-result"
+                  onClick={() => {
+                    setSelectedProjectId(project.id);
+                    setActiveTab('projects');
+                  }}
+                >
+                  <strong>{project.title}</strong>
+                  <span>{project.course}</span>
+                </button>
+              ))}
             </div>
-          ) : null}
-        </Panel>
-      </div>
+          </Panel>
 
-      <Panel title="Recommended projects" subtitle="High-rated and featured">
-        <div className="simple-list">
-          {recommendedProjects.map((project) => (
-            <div key={project.id} className="simple-list-item">
-              <strong>{project.title}</strong>
-              <span>
-                {project.course} · {project.rating.toFixed(1)}/5
-              </span>
+          <Panel title="Favorite portfolios" subtitle="Saved student portfolio list">
+            <div className="stack-list">
+              {favoritePortfolios.map((portfolio) => (
+                <button
+                  key={portfolio.id}
+                  type="button"
+                  className="directory-result"
+                  onClick={() => {
+                    setSelectedPortfolioId(portfolio.id);
+                    setActiveTab('portfolios');
+                  }}
+                >
+                  <strong>{portfolio.name}</strong>
+                  <span>{portfolio.major}</span>
+                </button>
+              ))}
             </div>
-          ))}
+          </Panel>
         </div>
-      </Panel>
-
-      <Panel title="Favorites" subtitle="Saved projects and portfolios">
-        <div className="content-grid">
-          <div className="simple-list">
-            {favoriteProjects.map((project) => (
-              <div key={project.id} className="simple-list-item">
-                <strong>⭐ {project.title}</strong>
-                <span>{project.course}</span>
-              </div>
-            ))}
-          </div>
-          <div className="simple-list">
-            {favoritePortfolios.map((portfolio) => (
-              <div key={portfolio.id} className="simple-list-item">
-                <strong>⭐ {portfolio.name}</strong>
-                <span>{portfolio.major}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Panel>
+      ) : null}
     </div>
   );
 }

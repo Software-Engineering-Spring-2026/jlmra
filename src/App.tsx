@@ -295,12 +295,12 @@ function App() {
     );
 
     if (!matchedAccount) {
-      setLoginError('Email not found in demo accounts.');
+      setLoginError('We could not find an account with this email.');
       return false;
     }
 
     if (matchedAccount.password !== loginForm.password.trim()) {
-      setLoginError('Password does not match.');
+      setLoginError('The password is incorrect.');
       return false;
     }
 
@@ -312,12 +312,12 @@ function App() {
 
   const handleVerifyOtp = () => {
     if (!pendingLoginAccount) {
-      setLoginError('Please enter credentials first.');
+      setLoginError('Sign in with your email and password before entering the OTP.');
       return;
     }
 
     if (pendingLoginAccount.otp !== loginForm.otp.trim()) {
-      setLoginError('OTP does not match.');
+      setLoginError('The verification code is incorrect.');
       return;
     }
 
@@ -640,7 +640,7 @@ function App() {
     showSaveNotice('Company profile saved');
     addNotification({
       title: 'Company profile updated',
-      message: 'Company details were updated and are ready for the demo.',
+      message: 'Company details were updated.',
       audience: ['employer'],
     });
   };
@@ -839,7 +839,7 @@ function App() {
   const addReviewComment = (projectId: string) => {
     const draft =
       reviewDrafts[projectId]?.trim() ||
-      'The project direction is strong. Keep simplifying dense screens for the final demo.';
+      'The project direction is strong. Keep simplifying dense screens before the final review.';
 
     setProjects((current) =>
       current.map((project) =>
@@ -956,18 +956,18 @@ function App() {
     );
   };
 
-  const createAdminAccount = () => {
+  const createAdminAccount = (name: string, email: string, password: string) => {
     const nextNumber = users.filter((user) => user.role === 'admin').length + 1;
 
     setUsers((current) => [
       ...current,
       {
         id: createId('user'),
-        name: `Admin ${nextNumber}`,
-        email: `admin${nextNumber}@guc.edu.eg`,
+        name: name.trim() || `Admin ${nextNumber}`,
+        email: email.trim() || `admin${nextNumber}@guc.edu.eg`,
         role: 'admin',
         status: 'Active',
-        password: 'Admin123',
+        password: password.trim() || 'Admin123',
         otp: '225790',
         profilePicture: '',
       },
@@ -1033,6 +1033,10 @@ function App() {
 
   const downloadCompanyDocument = (companyName: string, document: string) => {
     showSaveNotice(`${document} from ${companyName} is ready to download.`);
+  };
+
+  const viewCompanyDocument = (companyName: string, document: string) => {
+    showSaveNotice(`${document} from ${companyName} opened for review.`);
   };
 
   const openConversation = (conversationId: string) => {
@@ -1256,6 +1260,7 @@ function App() {
             reviewCourseLinkRequest={reviewCourseLinkRequest}
             projects={projects}
             toggleProjectActivation={toggleProjectActivation}
+            viewCompanyDocument={viewCompanyDocument}
             downloadCompanyDocument={downloadCompanyDocument}
             featuredProject={featuredProject}
             instructorProfile={instructorProfile}
@@ -1294,7 +1299,7 @@ function App() {
 
   return (
     <div
-      className={`app-root ${darkMode ? 'theme-dark' : ''}`}
+      className={`app-root role-${activeRole} ${darkMode ? 'theme-dark' : ''}`}
       style={{ fontSize: appFontSize }}
     >
       <div className={`workspace-shell role-${activeRole}`}>

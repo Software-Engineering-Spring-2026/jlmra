@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { type WorkspacePage } from '../appConfig';
 import {
   type Appeal,
@@ -24,7 +24,7 @@ type AdminWorkspaceProps = {
   appeals: Appeal[];
   resolveAppeal: (appealId: string) => void;
   users: UserAccount[];
-  createAdminAccount: () => void;
+  createAdminAccount: (name: string, email: string, password: string) => void;
   toggleUserStatus: (userId: string) => void;
   courses: Course[];
   createCourse: () => void;
@@ -35,6 +35,7 @@ type AdminWorkspaceProps = {
   ) => void;
   projects: Project[];
   toggleProjectActivation: (projectId: string) => void;
+  viewCompanyDocument: (companyName: string, document: string) => void;
   downloadCompanyDocument: (companyName: string, document: string) => void;
   featuredProject: Project;
   instructorProfile: InstructorProfile;
@@ -67,6 +68,7 @@ export function AdminWorkspace({
   reviewCourseLinkRequest,
   projects,
   toggleProjectActivation,
+  viewCompanyDocument,
   downloadCompanyDocument,
   featuredProject,
   instructorProfile,
@@ -83,6 +85,24 @@ export function AdminWorkspace({
   onToggleNotificationsEnabled,
   onToggleNotificationRead,
 }: AdminWorkspaceProps) {
+  const [approvalTab, setApprovalTab] = useState<'companies' | 'appeals' | 'flagged'>(
+    'companies'
+  );
+  const [adminDraft, setAdminDraft] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
+
+  const submitAdminDraft = () => {
+    if (!adminDraft.name.trim() || !adminDraft.email.trim() || !adminDraft.password.trim()) {
+      return;
+    }
+
+    createAdminAccount(adminDraft.name, adminDraft.email, adminDraft.password);
+    setAdminDraft({ name: '', email: '', password: '' });
+  };
+
   switch (currentPage) {
     case 'dashboard':
       return (
@@ -156,7 +176,30 @@ export function AdminWorkspace({
             title="Employer approvals and appeals"
             description="Company verification and project appeals."
           />
-          <div className="content-grid content-grid-wide">
+          <div className="directory-tabs" aria-label="Approval sections">
+            <button
+              type="button"
+              className={`directory-tab ${approvalTab === 'companies' ? 'active' : ''}`}
+              onClick={() => setApprovalTab('companies')}
+            >
+              Companies
+            </button>
+            <button
+              type="button"
+              className={`directory-tab ${approvalTab === 'appeals' ? 'active' : ''}`}
+              onClick={() => setApprovalTab('appeals')}
+            >
+              Appeals
+            </button>
+            <button
+              type="button"
+              className={`directory-tab ${approvalTab === 'flagged' ? 'active' : ''}`}
+              onClick={() => setApprovalTab('flagged')}
+            >
+              Flagged Projects
+            </button>
+          </div>
+          {approvalTab === 'companies' ? (
             <Panel title="Company approvals" subtitle="Documents and decisions">
               <div className="stack-list">
                 {companyRequests.map((request) => (
@@ -184,7 +227,13 @@ export function AdminWorkspace({
                           <strong>{document}</strong>
                           <span>Uploaded PDF</span>
                           <div className="button-row">
-                            <button type="button" className="ghost-button">
+                            <button
+                              type="button"
+                              className="ghost-button"
+                              onClick={() =>
+                                viewCompanyDocument(request.companyName, document)
+                              }
+                            >
                               View
                             </button>
                             <button
@@ -220,6 +269,8 @@ export function AdminWorkspace({
                 ))}
               </div>
             </Panel>
+          ) : null}
+          {approvalTab === 'appeals' ? (
             <Panel title="Student appeals" subtitle="Flags that students responded to">
               <div className="stack-list">
                 {appeals.map((appeal) => (
@@ -246,6 +297,8 @@ export function AdminWorkspace({
                 ))}
               </div>
             </Panel>
+          ) : null}
+          {approvalTab === 'flagged' ? (
             <Panel title="Flagged projects" subtitle="Activate or deactivate">
               <div className="stack-list">
                 {projects
@@ -270,7 +323,7 @@ export function AdminWorkspace({
                   ))}
               </div>
             </Panel>
-          </div>
+          ) : null}
         </div>
       );
     case 'users':
@@ -280,13 +333,64 @@ export function AdminWorkspace({
             eyebrow="Administrator users"
             title="Users and courses"
             description="Accounts, roles, activation, and course directory."
-            action={
-              <button type="button" className="primary-button" onClick={createAdminAccount}>
-                Create Admin
-              </button>
-            }
           />
           <div className="content-grid content-grid-wide">
+            <Panel title="Create administrator" subtitle="Name, email, and password">
+              <div className="form-grid">
+                <label>
+                  Full name
+                  <input
+                    value={adminDraft.name}
+                    onChange={(event) =>
+                      setAdminDraft((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                    placeholder="Enter admin name"
+                  />
+                </label>
+                <label>
+                  GUC email
+                  <input
+                    value={adminDraft.email}
+                    onChange={(event) =>
+                      setAdminDraft((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }))
+                    }
+                    placeholder="admin.name@guc.edu.eg"
+                  />
+                </label>
+                <label>
+                  Password
+                  <input
+                    value={adminDraft.password}
+                    type="password"
+                    onChange={(event) =>
+                      setAdminDraft((current) => ({
+                        ...current,
+                        password: event.target.value,
+                      }))
+                    }
+                    placeholder="Enter password"
+                  />
+                </label>
+              </div>
+              <button
+                type="button"
+                className="primary-button top-space"
+                disabled={
+                  !adminDraft.name.trim() ||
+                  !adminDraft.email.trim() ||
+                  !adminDraft.password.trim()
+                }
+                onClick={submitAdminDraft}
+              >
+                Create Administrator
+              </button>
+            </Panel>
             <Panel title="User directory" subtitle="Students, employers, instructors, and admins">
               <div className="stack-list">
                 {users.map((user) => (
@@ -437,7 +541,7 @@ export function AdminWorkspace({
                 </div>
               </div>
             </Panel>
-            <Panel title="Most visible records" subtitle="Simple examples for the PM walkthrough">
+            <Panel title="Most visible records" subtitle="Important platform records">
               <div className="simple-list">
                 <div className="simple-list-item">
                   <strong>Top project</strong>

@@ -7,6 +7,7 @@ import {
   type Project,
   type StudentProfile,
 } from '../mockData';
+import { Icon } from '../components/icons';
 import { Badge, PageHeader, Panel, StatCard } from '../components/ui';
 import { InboxPage } from './InboxPage';
 import { NotificationsPage } from './NotificationsPage';
@@ -607,10 +608,11 @@ export function StudentWorkspace({
                   </button>
                   <button
                     type="button"
-                    className="ghost-button"
+                    className="ghost-button favorite-button"
                     onClick={() => toggleInternshipFavorite(internship.id)}
                   >
-                    {internship.favorite ? '⭐ Remove Favorite' : '⭐ Favorite'}
+                    <Icon name="star" />
+                    {internship.favorite ? 'Remove Favorite' : 'Favorite'}
                   </button>
                 </div>
               </article>

@@ -17,6 +17,7 @@ export type IconName =
   | 'search'
   | 'settings'
   | 'signup'
+  | 'star'
   | 'sun'
   | 'text'
   | 'user'
@@ -127,6 +128,9 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M19 8v6" />
       <path d="M16 11h6" />
     </>
+  ),
+  star: (
+    <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2l-5.6 3 1.1-6.2L3 9.6l6.2-.9Z" />
   ),
   sun: (
     <>
