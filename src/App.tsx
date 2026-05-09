@@ -1,11 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
-import {
-  demoAccounts,
-  pagesByRole,
-  type DemoAccount,
-  type WorkspacePage,
-} from './appConfig';
+import { demoAccounts, pagesByRole, type WorkspacePage } from './appConfig';
 import { Icon } from './components/icons';
 import { LoginScreen } from './pages/LoginScreen';
 import { StudentWorkspace } from './pages/StudentWorkspace';
@@ -68,8 +63,6 @@ const defaultNotificationPreferences: Record<Role, boolean> = {
   admin: true,
 };
 
-const savedAccountsKey = 'bridgeboard-demo-accounts';
-
 const fontSizeByScale: Record<FontScale, string> = {
   small: '17px',
   medium: '18px',
@@ -110,35 +103,19 @@ const buildHash = (
     page === 'inbox' && conversationId ? `/${conversationId}` : ''
   }`;
 
-const loadSavedAccounts = () => {
-  try {
-    const savedAccounts = window.localStorage.getItem(savedAccountsKey);
-    if (!savedAccounts) {
-      return demoAccounts;
-    }
-
-    const parsedAccounts = JSON.parse(savedAccounts);
-    if (!Array.isArray(parsedAccounts)) {
-      return demoAccounts;
-    }
-
-    return parsedAccounts as DemoAccount[];
-  } catch {
-    return demoAccounts;
-  }
-};
-
 function App() {
-  const [accounts, setAccounts] = useState<DemoAccount[]>(loadSavedAccounts);
-  const [session, setSession] = useState<DemoAccount | null>(null);
+  const [session, setSession] = useState<(typeof demoAccounts)[number] | null>(
+    null
+  );
   const [currentPage, setCurrentPage] = useState<WorkspacePage>('dashboard');
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',
     otp: '',
   });
-  const [pendingLoginAccount, setPendingLoginAccount] =
-    useState<DemoAccount | null>(null);
+  const [pendingLoginAccount, setPendingLoginAccount] = useState<
+    (typeof demoAccounts)[number] | null
+  >(null);
   const [loginError, setLoginError] = useState('');
 
   const [studentProfile, setStudentProfile] =
@@ -313,7 +290,7 @@ function App() {
   };
 
   const handleLoginCredentials = () => {
-    const matchedAccount = accounts.find(
+    const matchedAccount = demoAccounts.find(
       (account) => account.email.toLowerCase() === loginForm.email.trim().toLowerCase()
     );
 
@@ -331,52 +308,6 @@ function App() {
     setLoginForm((current) => ({ ...current, otp: '' }));
     setLoginError('');
     return true;
-  };
-
-  const handleCreateAccount = ({
-    role,
-    firstName,
-    lastName,
-    email,
-    password,
-  }: {
-    role: Exclude<Role, 'admin'>;
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-  }) => {
-    const trimmedEmail = email.trim().toLowerCase();
-
-    if (accounts.some((account) => account.email.toLowerCase() === trimmedEmail)) {
-      return {
-        ok: false,
-        message: 'An account with this email already exists.',
-      };
-    }
-
-    const nextAccount: DemoAccount = {
-      id: createId('account'),
-      role,
-      name: `${firstName.trim()} ${lastName.trim()}`.trim(),
-      email: trimmedEmail,
-      password: password.trim(),
-      otp: '000000',
-      landingPage: 'dashboard',
-    };
-
-    setAccounts((current) => {
-      const nextAccounts = [...current, nextAccount];
-      window.localStorage.setItem(savedAccountsKey, JSON.stringify(nextAccounts));
-      return nextAccounts;
-    });
-    setLoginForm({ email: trimmedEmail, password: password.trim(), otp: '' });
-    setLoginError('');
-
-    return {
-      ok: true,
-      message: 'Account created. Sign in with OTP 000000.',
-    };
   };
 
   const handleVerifyOtp = () => {
@@ -1355,13 +1286,12 @@ function App() {
         style={{ fontSize: appFontSize }}
       >
         <LoginScreen
-          accounts={accounts}
+          accounts={demoAccounts}
           loginForm={loginForm}
           setLoginForm={setLoginForm}
           loginError={loginError}
           onLoginCredentials={handleLoginCredentials}
           onVerifyOtp={handleVerifyOtp}
-          onCreateAccount={handleCreateAccount}
         />
       </div>
     );

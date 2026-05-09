@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { type DemoAccount } from '../appConfig';
 import { type Role, roleMeta } from '../mockData';
 import { Icon } from '../components/icons';
@@ -20,16 +20,11 @@ type LoginScreenProps = {
   loginError: string;
   onLoginCredentials: () => boolean;
   onVerifyOtp: () => void;
-  onCreateAccount: (account: {
-    role: SignupRole;
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-  }) => { ok: boolean; message: string };
 };
 
 type SignupRole = Exclude<Role, 'admin'>;
+
+const savedSignupAccountsKey = 'bridgeboard-signup-accounts';
 
 const signupRoleLabels: Record<SignupRole, string> = {
   student: 'Student',
@@ -51,7 +46,6 @@ export function LoginScreen({
   loginError,
   onLoginCredentials,
   onVerifyOtp,
-  onCreateAccount,
 }: LoginScreenProps) {
   const [authMode, setAuthMode] = useState<
     'signin' | 'otp' | 'signup' | 'forgot' | 'forgot-otp'
@@ -68,6 +62,28 @@ export function LoginScreen({
   });
   const [authNotice, setAuthNotice] = useState('');
   const [signupError, setSignupError] = useState('');
+
+  useEffect(() => {
+    try {
+      const savedAccounts = window.localStorage.getItem(savedSignupAccountsKey);
+      const parsedAccounts = savedAccounts ? JSON.parse(savedAccounts) : [];
+
+      if (Array.isArray(parsedAccounts)) {
+        parsedAccounts.forEach((account: DemoAccount) => {
+          const accountExists = accounts.some(
+            (current) =>
+              current.email.toLowerCase() === account.email.toLowerCase()
+          );
+
+          if (!accountExists) {
+            accounts.push(account);
+          }
+        });
+      }
+    } catch {
+      window.localStorage.removeItem(savedSignupAccountsKey);
+    }
+  }, [accounts]);
 
   const detectedAccount = accounts.find(
     (account) => account.email.toLowerCase() === loginForm.email.trim().toLowerCase()
@@ -95,13 +111,13 @@ export function LoginScreen({
 
     const email =
       signupRole === 'employer' && signupForm.companyEmail.trim()
-        ? signupForm.companyEmail
-        : signupForm.email;
+        ? signupForm.companyEmail.trim()
+        : signupForm.email.trim();
 
     if (
       !signupForm.firstName.trim() ||
       !signupForm.lastName.trim() ||
-      !email.trim() ||
+      !email ||
       !signupForm.password.trim()
     ) {
       setSignupError('Please fill in the required account details.');
@@ -113,19 +129,32 @@ export function LoginScreen({
       return;
     }
 
-    const result = onCreateAccount({
-      role: signupRole,
-      firstName: signupForm.firstName,
-      lastName: signupForm.lastName,
-      email,
-      password: signupForm.password,
-    });
+    const normalizedEmail = email.toLowerCase();
+    const accountExists = accounts.some(
+      (account) => account.email.toLowerCase() === normalizedEmail
+    );
 
-    if (!result.ok) {
-      setSignupError(result.message);
+    if (accountExists) {
+      setSignupError('An account with this email already exists.');
       return;
     }
 
+    const nextAccount: DemoAccount = {
+      id: `signup-${Date.now()}`,
+      role: signupRole,
+      name: `${signupForm.firstName.trim()} ${signupForm.lastName.trim()}`.trim(),
+      email: normalizedEmail,
+      password: signupForm.password.trim(),
+      otp: '000000',
+      landingPage: 'dashboard',
+    };
+
+    accounts.push(nextAccount);
+    window.localStorage.setItem(
+      savedSignupAccountsKey,
+      JSON.stringify(accounts.filter((account) => account.id.startsWith('signup-')))
+    );
+    setLoginForm({ email: normalizedEmail, password: signupForm.password.trim(), otp: '' });
     setSignupForm({
       companyName: '',
       companyEmail: '',
@@ -136,7 +165,7 @@ export function LoginScreen({
       confirmPassword: '',
     });
     setSignupError('');
-    setAuthNotice(result.message);
+    setAuthNotice('Account created. Sign in with OTP 000000.');
     setAuthMode('signin');
   };
 
