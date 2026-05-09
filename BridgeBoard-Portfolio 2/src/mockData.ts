@@ -1,6 +1,6 @@
 export type Role = 'student' | 'employer' | 'instructor' | 'admin';
 
-export type TaskState = 'pending' | 'postponed' | 'completed';
+export type TaskState = 'Done' | 'In Progress' | 'Next';
 export type InvitationStatus = 'Pending' | 'Accepted' | 'Rejected';
 export type ProjectVisibility = 'Public' | 'Private';
 export type ApplicationStatus =
@@ -44,11 +44,9 @@ export type Conversation = {
 export type ProjectTask = {
   id: string;
   title: string;
-  description: string;
   owner: string;
   state: TaskState;
   due: string;
-  order: number;
 };
 
 export type ProjectFeedback = {
@@ -74,8 +72,7 @@ export type Project = {
   createdAt: string;
   github: string;
   languages: string[];
-  demoVideoUrl: string;
-  reportUrl: string;
+  demo: string;
   summary: string;
   rating: number;
   visibility: ProjectVisibility;
@@ -86,16 +83,6 @@ export type Project = {
   tasks: ProjectTask[];
   feedback: ProjectFeedback[];
   invitations: ProjectInvitation[];
-  isFlagged: boolean;
-  flagReason?: string;
-};
-
-export type ThesisDraft = {
-  id: string;
-  title: string;
-  fileUrl: string;
-  uploadedAt: string;
-  isFinal: boolean;
 };
 
 export type StudentProfile = {
@@ -108,8 +95,6 @@ export type StudentProfile = {
   bio: string;
   skills: string[];
   portfolioVisibility: 'Public' | 'Private';
-  profilePicture: string;
-  thesisDrafts: ThesisDraft[];
 };
 
 export type InternshipApplication = {
@@ -151,7 +136,6 @@ export type PortfolioCard = {
   featuredProject: string;
   rating: number;
   favorite: boolean;
-  profilePicture: string;
 };
 
 export type EmployerProfile = {
@@ -160,11 +144,10 @@ export type EmployerProfile = {
   companyEmail: string;
   contactPhone: string;
   address: string;
-  mapLocation: { lat: number; lng: number } | null;
+  mapLabel: string;
   summary: string;
   documents: string[];
   verificationStatus: CompanyStatus;
-  logo: string;
 };
 
 export type CompanyRequest = {
@@ -186,7 +169,6 @@ export type InstructorProfile = {
   interests: string[];
   education: string;
   linkedCourses: string[];
-  profilePicture: string;
 };
 
 export type UserAccount = {
@@ -195,9 +177,6 @@ export type UserAccount = {
   email: string;
   role: Role;
   status: AccountStatus;
-  password: string;
-  otp: string;
-  profilePicture: string;
 };
 
 export type Course = {
@@ -205,7 +184,6 @@ export type Course = {
   name: string;
   instructor: string;
   linked: boolean;
-  linkRequestStatus?: 'Pending' | 'Approved' | 'Rejected';
 };
 
 export type Appeal = {
@@ -233,17 +211,15 @@ export const roleMeta: Record<Role, { label: string }> = {
 };
 
 export const initialStudentProfile: StudentProfile = {
-  name: 'Ahmed Hossam',
+  name: 'Lina Hassan',
   major: 'Computer Science',
   graduation: 'Spring 2027',
-  email: 'ahmed.hossam@student.guc.edu.eg',
+  email: 'lina.hassan@student.guc.edu.eg',
   phone: '+20 109 304 1208',
-  linkedin: 'linkedin.com/in/ahmed-hossam',
-  bio: 'Full-stack developer focused on building scalable web applications and user-friendly interfaces.',
-  skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS'],
+  linkedin: 'linkedin.com/in/lina-hassan-ui',
+  bio: 'Frontend-focused builder who enjoys turning messy workflows into clear, usable interfaces for students and recruiters.',
+  skills: ['React', 'TypeScript', 'UI Systems', 'Accessibility', 'Figma'],
   portfolioVisibility: 'Public',
-  profilePicture: '',
-  thesisDrafts: [],
 };
 
 export const initialProjects: Project[] = [
@@ -255,10 +231,8 @@ export const initialProjects: Project[] = [
     createdAt: '12 Apr 2026',
     github: 'github.com/linahassan/career-compass',
     languages: ['TypeScript', 'React', 'CSS'],
-    demoVideoUrl: 'https://youtube.com/watch?v=demo1',
-    reportUrl: '',
+    demo: '2m 14s walkthrough',
     summary: 'A student-first portal that helps discover internships, compare portfolios, and manage project collaboration.',
-    isFlagged: false,
     rating: 4.8,
     visibility: 'Public',
     featured: true,
@@ -270,28 +244,22 @@ export const initialProjects: Project[] = [
         id: 'task-1',
         title: 'Ship recruiter review dashboard',
         owner: 'Lina',
-        description: 'Build dashboard UI for recruiters',
-        state: 'pending',
+        state: 'In Progress',
         due: 'Tomorrow',
-        order: 1,
       },
       {
         id: 'task-2',
         title: 'Record updated demo video',
         owner: 'Sara',
-        description: 'Record project demo video',
-        state: 'postponed',
+        state: 'Next',
         due: 'This week',
-        order: 2,
       },
       {
         id: 'task-3',
         title: 'Document testing checklist',
         owner: 'Karim',
-        description: 'Create testing checklist',
-        state: 'completed',
+        state: 'Done',
         due: 'Done',
-        order: 3,
       },
     ],
     feedback: [
@@ -333,10 +301,8 @@ export const initialProjects: Project[] = [
     createdAt: '04 Apr 2026',
     github: 'github.com/linahassan/studio-queue',
     languages: ['React', 'Node mock', 'SCSS'],
-    demoVideoUrl: 'https://youtube.com/watch?v=demo2',
-    reportUrl: '',
+    demo: '1m 31s prototype clip',
     summary: 'A collaboration board for capstone teams to organize milestones, assign tasks, and collect instructor comments.',
-    isFlagged: false,
     rating: 4.3,
     visibility: 'Private',
     featured: false,
@@ -348,19 +314,15 @@ export const initialProjects: Project[] = [
         id: 'task-4',
         title: 'Refine mobile layout',
         owner: 'Lina',
-        description: 'Build dashboard UI for recruiters',
-        state: 'pending',
+        state: 'In Progress',
         due: 'Today',
-        order: 1,
       },
       {
         id: 'task-5',
         title: 'Confirm course tagging',
         owner: 'Nour',
-        description: 'Record project demo video',
-        state: 'postponed',
+        state: 'Next',
         due: 'Tomorrow',
-        order: 2,
       },
     ],
     feedback: [
@@ -389,10 +351,8 @@ export const initialProjects: Project[] = [
     createdAt: '24 Mar 2026',
     github: 'github.com/linahassan/campus-bazaar',
     languages: ['React', 'Framer mock', 'Chart UI'],
-    demoVideoUrl: 'https://youtube.com/watch?v=demo3',
-    reportUrl: '',
+    demo: '3m 02s pitch deck',
     summary: 'A marketplace concept for students to showcase projects and freelance work while collecting portfolio analytics.',
-    isFlagged: false,
     rating: 4.6,
     visibility: 'Public',
     featured: false,
@@ -404,19 +364,15 @@ export const initialProjects: Project[] = [
         id: 'task-6',
         title: 'Update persona slides',
         owner: 'Mariam',
-        description: 'Create testing checklist',
-        state: 'completed',
+        state: 'Done',
         due: 'Done',
-        order: 1,
       },
       {
         id: 'task-7',
         title: 'Simplify save-to-favorites flow',
         owner: 'Lina',
-        description: 'Record project demo video',
-        state: 'postponed',
+        state: 'Next',
         due: 'Friday',
-        order: 2,
       },
     ],
     feedback: [
@@ -556,27 +512,25 @@ export const initialInternships: Internship[] = [
 export const initialPortfolios: PortfolioCard[] = [
   {
     id: 'portfolio-1',
-    name: 'Ahmed Hossam',
-    email: 'ahmed.hossam@student.guc.edu.eg',
+    name: 'Lina Hassan',
+    email: 'lina.hassan@student.guc.edu.eg',
     major: 'Computer Science',
-    topSkills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS'],
+    topSkills: ['React', 'TypeScript', 'Accessibility'],
     projectsCount: 3,
     featuredProject: 'Career Compass',
     rating: 4.8,
     favorite: true,
-    profilePicture: '',
   },
   {
     id: 'portfolio-2',
-    name: 'Rawan Elshamy',
-    email: 'rawan.elshamy@student.guc.edu.eg',
+    name: 'Mariam Tamer',
+    email: 'mariam.tamer@student.guc.edu.eg',
     major: 'Media Engineering',
     topSkills: ['Motion Design', 'Design Systems', 'Figma'],
     projectsCount: 5,
     featuredProject: 'Campus Bazaar',
     rating: 4.7,
     favorite: false,
-    profilePicture: '',
   },
   {
     id: 'portfolio-3',
@@ -588,7 +542,6 @@ export const initialPortfolios: PortfolioCard[] = [
     featuredProject: 'Build Monitor',
     rating: 4.4,
     favorite: true,
-    profilePicture: '',
   },
   {
     id: 'portfolio-4',
@@ -600,21 +553,19 @@ export const initialPortfolios: PortfolioCard[] = [
     featuredProject: 'Talent Grid',
     rating: 4.5,
     favorite: false,
-    profilePicture: '',
   },
 ];
 
 export const initialEmployerProfile: EmployerProfile = {
   companyName: 'Bright Labs',
   industry: 'Product Consultancy',
-  companyEmail: 'lara.ahmed@brightlabs.io',
+  companyEmail: 'talent@brightlabs.io',
   contactPhone: '+20 122 440 9920',
   address: '5A Innovation District, New Cairo',
-  mapLocation: { lat: 30.0131, lng: 31.2089 },
-  summary: 'We help early-stage teams ship clearer product experiences with a focus on accessibility and performance.',
-  documents: ['Tax Certificate 2025', 'Commercial Registry'],
-  verificationStatus: 'Approved',
-  logo: '',
+  mapLabel: 'Google Maps pin synced to New Cairo HQ',
+  summary: 'Bright Labs builds product operations software for education and early-career hiring teams.',
+  documents: ['Tax Certificate.pdf', 'Commercial Register.pdf', 'Brand Guidelines.pdf'],
+  verificationStatus: 'Pending',
 };
 
 export const initialCompanyRequests: CompanyRequest[] = [
@@ -651,66 +602,50 @@ export const initialCompanyRequests: CompanyRequest[] = [
 ];
 
 export const initialInstructorProfile: InstructorProfile = {
-  name: 'Jana Hassan',
-  email: 'jana.hassan@guc.edu.eg',
+  name: 'Dr. Maya El-Adl',
+  email: 'maya.eladl@guc.edu.eg',
   title: 'Course Instructor',
   bio: 'I work with students on end-to-end digital products, with a soft spot for clear interaction design and persuasive storytelling.',
   interests: ['HCI', 'Product Thinking', 'Critique Frameworks'],
   education: 'PhD in Human Computer Interaction',
   linkedCourses: ['Bachelor Project', 'CSEN 704'],
-  profilePicture: '',
 };
 
 export const initialUsers: UserAccount[] = [
   {
     id: 'user-1',
-    name: 'Ahmed Hossam',
-    email: 'ahmed.hossam@student.guc.edu.eg',
+    name: 'Lina Hassan',
+    email: 'lina.hassan@student.guc.edu.eg',
     role: 'student',
     status: 'Active',
-    password: 'Student123',
-    otp: '482190',
-    profilePicture: '',
   },
   {
     id: 'user-2',
-    name: 'Lara Ahmed',
-    email: 'lara.ahmed@brightlabs.io',
+    name: 'Mariam Saad',
+    email: 'talent@brightlabs.io',
     role: 'employer',
     status: 'Active',
-    password: 'Employer123',
-    otp: '913572',
-    profilePicture: '',
   },
   {
     id: 'user-3',
-    name: 'Jana Hassan',
-    email: 'jana.hassan@guc.edu.eg',
+    name: 'Dr. Maya El-Adl',
+    email: 'maya.eladl@guc.edu.eg',
     role: 'instructor',
     status: 'Active',
-    password: 'Instructor123',
-    otp: '640218',
-    profilePicture: '',
   },
   {
     id: 'user-4',
-    name: 'Malak Ebraheem',
-    email: 'malak.ebraheem@guc.edu.eg',
+    name: 'Nour Mohmed',
+    email: 'nour.mohmed@guc.edu.eg',
     role: 'admin',
     status: 'Active',
-    password: 'Admin123',
-    otp: '225790',
-    profilePicture: '',
   },
   {
     id: 'user-5',
-    name: 'Rawan Elshamy',
-    email: 'rawan.elshamy@student.guc.edu.eg',
-    role: 'student',
-    status: 'Active',
-    password: 'Student123',
-    otp: '573829',
-    profilePicture: '',
+    name: 'Sara Tarek',
+    email: 'hello@orbitanalytics.io',
+    role: 'employer',
+    status: 'Inactive',
   },
 ];
 

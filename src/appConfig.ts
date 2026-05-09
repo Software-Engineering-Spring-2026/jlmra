@@ -31,12 +31,19 @@ export type PageMeta = {
   description: string;
 };
 
+// Demo login data:
+// Student: Ahmed Hossam | ahmed.hossam@student.guc.edu.eg | Student123 | OTP: 482190
+// Employer: Lara Ahmed | lara.ahmed@brightlabs.io | Employer123 | OTP: 913572
+// Instructor: Jana Hassan | jana.hassan@guc.edu.eg | Instructor123 | OTP: 640218
+// Admin: Malak Ebraheem | malak.ebraheem@guc.edu.eg | Admin123 | OTP: 225790
+// Extra Student: Rawan Elshamy | rawan.elshamy@student.guc.edu.eg | Student123 | OTP: 573829
+
 export const demoAccounts: DemoAccount[] = [
   {
     id: 'demo-student',
     role: 'student',
-    name: 'Lina Hassan',
-    email: 'lina.hassan@student.guc.edu.eg',
+    name: 'Ahmed Hossam',
+    email: 'ahmed.hossam@student.guc.edu.eg',
     password: 'Student123',
     otp: '482190',
     landingPage: 'dashboard',
@@ -44,159 +51,72 @@ export const demoAccounts: DemoAccount[] = [
   {
     id: 'demo-employer',
     role: 'employer',
-    name: 'Mariam Saad',
-    email: 'talent@brightlabs.io',
+    name: 'Lara Ahmed',
+    email: 'lara.ahmed@brightlabs.io',
     password: 'Employer123',
-    otp: '482190',
+    otp: '913572',
     landingPage: 'dashboard',
   },
   {
     id: 'demo-instructor',
     role: 'instructor',
-    name: 'Dr. Maya El-Adl',
-    email: 'maya.eladl@guc.edu.eg',
+    name: 'Jana Hassan',
+    email: 'jana.hassan@guc.edu.eg',
     password: 'Instructor123',
-    otp: '482190',
+    otp: '640218',
     landingPage: 'dashboard',
   },
   {
     id: 'demo-admin',
     role: 'admin',
-    name: 'Nour Mohmed',
-    email: 'nour.mohmed@guc.edu.eg',
+    name: 'Malak Ebraheem',
+    email: 'malak.ebraheem@guc.edu.eg',
     password: 'Admin123',
-    otp: '482190',
+    otp: '225790',
+    landingPage: 'dashboard',
+  },
+  {
+    id: 'demo-student-2',
+    role: 'student',
+    name: 'Rawan Elshamy',
+    email: 'rawan.elshamy@student.guc.edu.eg',
+    password: 'Student123',
+    otp: '573829',
     landingPage: 'dashboard',
   },
 ];
 
 export const pagesByRole: Record<Role, PageMeta[]> = {
   student: [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      description: 'Your student home page with the most important project and internship updates.',
-    },
-    {
-      id: 'portfolio',
-      label: 'My Portfolio',
-      description: 'Your public-facing portfolio profile and visibility settings.',
-    },
-    {
-      id: 'projects',
-      label: 'Projects',
-      description: 'Focused project cards with tasks, feedback, and collaboration details.',
-    },
-    {
-      id: 'internships',
-      label: 'Internships',
-      description: 'Search, save, and apply to internships without leaving the student workspace.',
-    },
-    {
-      id: 'inbox',
-      label: 'Messages',
-      description: 'Private conversations with employers, instructors, and collaborators.',
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      description: 'Unread alerts, read states, and notification preferences.',
-    },
+    { id: 'dashboard', label: 'Dashboard', description: 'Home' },
+    { id: 'portfolio', label: 'Portfolio', description: 'Your profile' },
+    { id: 'projects', label: 'Projects', description: 'Manage projects' },
+    { id: 'internships', label: 'Internships', description: 'Find opportunities' },
+    { id: 'inbox', label: 'Messages', description: 'Chat' },
+    { id: 'notifications', label: 'Notifications', description: 'Alerts' },
   ],
   employer: [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      description: 'A clean hiring snapshot with verification status, openings, and candidate activity.',
-    },
-    {
-      id: 'profile',
-      label: 'Company Profile',
-      description: 'Your company details, uploaded documents, and verification information.',
-    },
-    {
-      id: 'internships',
-      label: 'Internships',
-      description: 'Create, edit, archive, and review your internship postings.',
-    },
-    {
-      id: 'applicants',
-      label: 'Applicants',
-      description: 'Review students by internship and move them through the pipeline.',
-    },
-    {
-      id: 'inbox',
-      label: 'Messages',
-      description: 'Private messages with students and instructors.',
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      description: 'Hiring and verification alerts for the employer account.',
-    },
+    { id: 'dashboard', label: 'Dashboard', description: 'Overview' },
+    { id: 'profile', label: 'Company', description: 'Profile' },
+    { id: 'internships', label: 'Internships', description: 'Postings' },
+    { id: 'applicants', label: 'Applicants', description: 'Candidates' },
+    { id: 'inbox', label: 'Messages', description: 'Chat' },
+    { id: 'notifications', label: 'Notifications', description: 'Alerts' },
   ],
   instructor: [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      description: 'A teaching overview with course links, pending invitations, and review workload.',
-    },
-    {
-      id: 'profile',
-      label: 'My Profile',
-      description: 'Your public instructor profile, biography, interests, and education.',
-    },
-    {
-      id: 'courses',
-      label: 'Courses',
-      description: 'All available courses, including linked courses and Bachelor Project.',
-    },
-    {
-      id: 'reviews',
-      label: 'Reviews',
-      description: 'Project comments, ratings, and flagging actions in one review page.',
-    },
-    {
-      id: 'inbox',
-      label: 'Messages',
-      description: 'Private communication with students and the admin team.',
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      description: 'Project invitation, review, and course-link alert management.',
-    },
+    { id: 'dashboard', label: 'Dashboard', description: 'Overview' },
+    { id: 'profile', label: 'Profile', description: 'Your info' },
+    { id: 'courses', label: 'Courses', description: 'Teaching' },
+    { id: 'reviews', label: 'Reviews', description: 'Grade projects' },
+    { id: 'inbox', label: 'Messages', description: 'Chat' },
+    { id: 'notifications', label: 'Notifications', description: 'Alerts' },
   ],
   admin: [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      description: 'Platform-level status for approvals, users, appeals, and overall activity.',
-    },
-    {
-      id: 'approvals',
-      label: 'Approvals',
-      description: 'Employer approvals, documents, and student appeals in one page.',
-    },
-    {
-      id: 'users',
-      label: 'Users',
-      description: 'Activate or deactivate users and review course administration data.',
-    },
-    {
-      id: 'analytics',
-      label: 'Analytics',
-      description: 'Platform summary cards and simple usage indicators for the PM demo.',
-    },
-    {
-      id: 'inbox',
-      label: 'Messages',
-      description: 'Internal communication and private messages for the admin role.',
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      description: 'Unread administrative alerts and approval-related notifications.',
-    },
+    { id: 'dashboard', label: 'Dashboard', description: 'Overview' },
+    { id: 'approvals', label: 'Approvals', description: 'Verify' },
+    { id: 'users', label: 'Users', description: 'Manage' },
+    { id: 'analytics', label: 'Analytics', description: 'Stats' },
+    { id: 'inbox', label: 'Messages', description: 'Chat' },
+    { id: 'notifications', label: 'Notifications', description: 'Alerts' },
   ],
 };

@@ -944,101 +944,11 @@ button:active {
 .theme-dark .panel:hover,
 .theme-dark .stat-card:hover,
 .theme-dark .session-card:hover,
-.theme-dark .project-card:hover,
-.theme-dark .panel:hover,
-.theme-dark .stat-card:hover {
+.theme-dark .control-row:hover,
+.theme-dark .list-card:hover,
+.theme-dark .project-card:hover {
   box-shadow: 0 28px 56px rgba(0, 0, 0, 0.28);
   border-color: rgba(108, 167, 255, 0.3);
-}
-
-/* ─── new login styles ─────────────────────────────────────────────────── */
-.auth-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.auth-tab {
-  flex: 1;
-  padding: 12px 20px;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
-  color: var(--ink-700);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 160ms ease;
-}
-
-.auth-tab.active {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
-.auth-form {
-  display: grid;
-  gap: 16px;
-}
-
-.role-picker {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.role-choice {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
-  color: var(--ink-700);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 160ms ease;
-}
-
-.role-choice.active {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.detected-role {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--accent-soft);
-  border-radius: var(--radius-md);
-  color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: 600;
-  width: fit-content;
-}
-
-.text-button {
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.login-meta-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 @media (max-width: 1200px) {

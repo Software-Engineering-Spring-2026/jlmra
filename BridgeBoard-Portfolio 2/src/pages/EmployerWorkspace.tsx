@@ -224,7 +224,7 @@ export function EmployerWorkspace({
             </Panel>
             <Panel
               title="Verification documents"
-              subtitle={`${employerProfile.verificationStatus} · ${employerProfile.address}`}
+              subtitle={`${employerProfile.verificationStatus} · ${employerProfile.mapLabel}`}
               action={
                 <button
                   type="button"

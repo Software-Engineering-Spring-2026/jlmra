@@ -109,12 +109,12 @@ function App() {
   const [currentPage, setCurrentPage] = useState<WorkspacePage>(
     demoAccounts[0].landingPage
   );
+  const [selectedAccountId, setSelectedAccountId] = useState(demoAccounts[0].id);
   const [loginForm, setLoginForm] = useState({
-    email: '',
-    password: '',
-    otp: '',
+    email: demoAccounts[0].email,
+    password: demoAccounts[0].password,
+    otp: demoAccounts[0].otp,
   });
-  const [pendingLoginAccount, setPendingLoginAccount] = useState<(typeof demoAccounts)[number] | null>(null);
   const [loginError, setLoginError] = useState('');
 
   const [studentProfile, setStudentProfile] =
@@ -160,6 +160,18 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [fontScale, setFontScale] = useState<FontScale>('medium');
 
+  const selectedAccount =
+    demoAccounts.find((account) => account.id === selectedAccountId) ??
+    demoAccounts[0];
+
+  useEffect(() => {
+    setLoginForm({
+      email: selectedAccount.email,
+      password: selectedAccount.password,
+      otp: selectedAccount.otp,
+    });
+    setLoginError('');
+  }, [selectedAccount]);
 
   const activeRole = session?.role ?? 'student';
   const activePages = session ? pagesByRole[session.role] : [];
@@ -291,45 +303,31 @@ function App() {
     ]);
   };
 
-  const handleLoginCredentials = () => {
+  const handleLogin = () => {
     const matchedAccount = demoAccounts.find(
       (account) => account.email.toLowerCase() === loginForm.email.trim().toLowerCase()
     );
 
     if (!matchedAccount) {
-      setLoginError('Email not found in demo accounts.');
-      return false;
+      setLoginError('Choose one of the demo users shown on the page.');
+      return;
     }
 
     if (matchedAccount.password !== loginForm.password.trim()) {
-      setLoginError('Password does not match.');
-      return false;
-    }
-
-    setPendingLoginAccount(matchedAccount);
-    setLoginForm((current) => ({ ...current, otp: '' }));
-    setLoginError('');
-    return true;
-  };
-
-  const handleVerifyOtp = () => {
-    if (!pendingLoginAccount) {
-      setLoginError('Please enter credentials first.');
+      setLoginError('The demo password does not match this account.');
       return;
     }
 
-    if (pendingLoginAccount.otp !== loginForm.otp.trim()) {
-      setLoginError('OTP does not match.');
+    if (matchedAccount.otp !== loginForm.otp.trim()) {
+      setLoginError('Use the demo OTP shown for the selected account.');
       return;
     }
 
-    setSession(pendingLoginAccount);
-    setCurrentPage(pendingLoginAccount.landingPage);
+    setSession(matchedAccount);
+    setCurrentPage(matchedAccount.landingPage);
     setSelectedConversationId(null);
     setIsSidebarOpen(false);
     setIsSettingsOpen(false);
-    setLoginForm({ email: '', password: '', otp: '' });
-    setPendingLoginAccount(null);
     setLoginError('');
   };
 
@@ -339,9 +337,6 @@ function App() {
     setSelectedConversationId(null);
     setIsSidebarOpen(false);
     setIsSettingsOpen(false);
-    setLoginForm({ email: '', password: '', otp: '' });
-    setPendingLoginAccount(null);
-    setLoginError('');
     if (window.location.hash !== '#/login') {
       window.location.hash = '#/login';
     }
@@ -401,11 +396,9 @@ function App() {
                 {
                   id: createId('task'),
                   title: nextTaskTitle,
-                  description: '',
                   owner: studentProfile.name.split(' ')[0],
-                  state: 'pending',
+                  state: 'Next',
                   due: 'This week',
-                  order: project.tasks.length + 1,
                 },
               ],
             }
@@ -1009,11 +1002,13 @@ function App() {
       >
         <LoginScreen
           accounts={demoAccounts}
+          selectedAccount={selectedAccount}
+          selectedAccountId={selectedAccountId}
+          setSelectedAccountId={setSelectedAccountId}
           loginForm={loginForm}
           setLoginForm={setLoginForm}
           loginError={loginError}
-          onLoginCredentials={handleLoginCredentials}
-          onVerifyOtp={handleVerifyOtp}
+          onLogin={handleLogin}
         />
       </div>
     );

@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { type DemoAccount } from '../appConfig';
-import { roleMeta } from '../mockData';
+import { type Role, roleMeta } from '../mockData';
 
 type LoginScreenProps = {
   accounts: DemoAccount[];
-  selectedAccount: DemoAccount;
-  selectedAccountId: string;
-  setSelectedAccountId: (id: string) => void;
   loginForm: {
     email: string;
     password: string;
@@ -20,23 +17,57 @@ type LoginScreenProps = {
     }>
   >;
   loginError: string;
-  onLogin: () => void;
+  onLoginCredentials: () => boolean;
+  onVerifyOtp: () => void;
+};
+
+type SignupRole = Exclude<Role, 'admin'>;
+
+const signupRoleLabels: Record<SignupRole, string> = {
+  student: 'Student',
+  employer: 'Employer',
+  instructor: 'Instructor',
+};
+
+const roleIcons: Record<Role, string> = {
+  student: '👤',
+  employer: '🏢',
+  instructor: '🎓',
+  admin: '⚙️',
 };
 
 export function LoginScreen({
   accounts,
-  selectedAccount,
-  selectedAccountId,
-  setSelectedAccountId,
   loginForm,
   setLoginForm,
   loginError,
-  onLogin,
+  onLoginCredentials,
+  onVerifyOtp,
 }: LoginScreenProps) {
-  const [authMode, setAuthMode] = useState<
-    'signin' | 'student-signup' | 'employer-signup' | 'instructor-signup' | 'forgot'
-  >('signin');
+  const [authMode, setAuthMode] = useState<'signin' | 'otp' | 'signup' | 'forgot'>('signin');
+  const [signupRole, setSignupRole] = useState<SignupRole>('student');
   const [authNotice, setAuthNotice] = useState('');
+
+  const detectedAccount = accounts.find(
+    (account) => account.email.toLowerCase() === loginForm.email.trim().toLowerCase()
+  );
+
+  const switchMode = (mode: 'signin' | 'otp' | 'signup' | 'forgot') => {
+    setAuthMode(mode);
+    setAuthNotice('');
+  };
+
+  const handleSigninSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onLoginCredentials()) {
+      switchMode('otp');
+    }
+  };
+
+  const handleOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onVerifyOtp();
+  };
 
   return (
     <div className="login-shell">
@@ -46,250 +77,197 @@ export function LoginScreen({
           <h1>Portfolio</h1>
         </div>
 
-        <div className="login-card-head">
-          <p>
-            {authMode === 'signin'
-              ? 'Sign in'
-              : authMode === 'forgot'
-              ? 'Reset password'
-              : 'Register'}
-          </p>
-          <h2>
-            {authMode === 'signin'
-              ? 'Choose an account'
-              : authMode === 'forgot'
-              ? 'Forgot password with OTP'
-              : 'Create a new account'}
-          </h2>
-          <span>
-            {authMode === 'signin'
-              ? 'Each account opens its own role workspace and pages.'
-              : authMode === 'forgot'
-              ? 'Prototype flow for updating a forgotten password using OTP.'
-              : 'Prototype sign-up flows for students, employers, and course instructors.'}
-          </span>
-        </div>
-
-        <div className="button-row">
+        <div className="auth-tabs">
           <button
             type="button"
-            className={`ghost-button ${authMode === 'signin' ? 'active' : ''}`}
-            onClick={() => {
-              setAuthMode('signin');
-              setAuthNotice('');
-            }}
+            className={`auth-tab ${authMode === 'signin' || authMode === 'otp' ? 'active' : ''}`}
+            onClick={() => switchMode('signin')}
           >
-            Login
+            Sign In
           </button>
           <button
             type="button"
-            className={`ghost-button ${authMode === 'student-signup' ? 'active' : ''}`}
-            onClick={() => {
-              setAuthMode('student-signup');
-              setAuthNotice('');
-            }}
+            className={`auth-tab ${authMode === 'signup' ? 'active' : ''}`}
+            onClick={() => switchMode('signup')}
           >
-            Student sign up
-          </button>
-          <button
-            type="button"
-            className={`ghost-button ${authMode === 'employer-signup' ? 'active' : ''}`}
-            onClick={() => {
-              setAuthMode('employer-signup');
-              setAuthNotice('');
-            }}
-          >
-            Employer sign up
-          </button>
-          <button
-            type="button"
-            className={`ghost-button ${authMode === 'instructor-signup' ? 'active' : ''}`}
-            onClick={() => {
-              setAuthMode('instructor-signup');
-              setAuthNotice('');
-            }}
-          >
-            Instructor sign up
-          </button>
-          <button
-            type="button"
-            className={`ghost-button ${authMode === 'forgot' ? 'active' : ''}`}
-            onClick={() => {
-              setAuthMode('forgot');
-              setAuthNotice('');
-            }}
-          >
-            Forgot password
+            Sign Up
           </button>
         </div>
 
-        {authMode === 'signin' ? (
-          <>
-            <div className="account-grid">
-              {accounts.map((account) => (
-                <button
-                  key={account.id}
-                  type="button"
-                  className={`account-card ${
-                    account.id === selectedAccountId ? 'active' : ''
-                  }`}
-                  onClick={() => setSelectedAccountId(account.id)}
-                >
-                  <span>{roleMeta[account.role].label}</span>
-                  <strong>{account.name}</strong>
-                  <small>{account.email}</small>
-                </button>
-              ))}
-            </div>
-
+        {authMode === 'signin' && (
+          <form onSubmit={handleSigninSubmit} className="auth-form">
             <div className="form-grid">
-              <label>
+              <label className="full-span">
                 Email
                 <input
+                  type="email"
                   value={loginForm.email}
-                  onChange={(event) =>
-                    setLoginForm((current) => ({
-                      ...current,
-                      email: event.target.value,
-                    }))
+                  placeholder="Enter your email"
+                  onChange={(e) =>
+                    setLoginForm((current) => ({ ...current, email: e.target.value }))
                   }
                 />
               </label>
+              {detectedAccount && (
+                <div className="detected-role">
+                  <span>{roleIcons[detectedAccount.role]}</span>
+                  <span>{roleMeta[detectedAccount.role].label} detected</span>
+                </div>
+              )}
               <label>
                 Password
                 <input
                   type="password"
                   value={loginForm.password}
-                  onChange={(event) =>
-                    setLoginForm((current) => ({
-                      ...current,
-                      password: event.target.value,
-                    }))
+                  placeholder="Enter password"
+                  onChange={(e) =>
+                    setLoginForm((current) => ({ ...current, password: e.target.value }))
                   }
                 />
               </label>
+            </div>
+
+            {loginError && <div className="error-banner">{loginError}</div>}
+
+            <div className="button-row">
+              <button type="submit" className="primary-button wide-button">
+                Continue
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => switchMode('forgot')}
+            >
+              Forgot password?
+            </button>
+          </form>
+        )}
+
+        {authMode === 'otp' && (
+          <form onSubmit={handleOtpSubmit} className="auth-form">
+            <div className="form-grid">
               <label className="full-span">
-                OTP
+                Enter OTP
                 <input
                   value={loginForm.otp}
-                  onChange={(event) =>
-                    setLoginForm((current) => ({
-                      ...current,
-                      otp: event.target.value,
-                    }))
+                  placeholder="6-digit code"
+                  inputMode="numeric"
+                  onChange={(e) =>
+                    setLoginForm((current) => ({ ...current, otp: e.target.value }))
                   }
                 />
               </label>
             </div>
 
-            {loginError ? <div className="error-banner">{loginError}</div> : null}
+            {loginError && <div className="error-banner">{loginError}</div>}
 
             <div className="button-row">
-              <button type="button" className="primary-button wide-button" onClick={onLogin}>
-                Login as {selectedAccount.name}
+              <button type="submit" className="primary-button wide-button">
+                Verify & Login
               </button>
-            </div>
-
-            <div className="login-hint">
-              Demo password for this account: <strong>{selectedAccount.password}</strong>
-            </div>
-          </>
-        ) : authMode === 'forgot' ? (
-          <>
-            <div className="form-grid">
-              <label>
-                Email
-                <input defaultValue="lina.hassan@student.guc.edu.eg" />
-              </label>
-              <label>
-                OTP
-                <input defaultValue="482190" />
-              </label>
-              <label>
-                New password
-                <input type="password" defaultValue="NewPassword123" />
-              </label>
-              <label>
-                Confirm password
-                <input type="password" defaultValue="NewPassword123" />
-              </label>
-            </div>
-            <div className="button-row">
               <button
                 type="button"
-                className="primary-button"
-                onClick={() =>
-                  setAuthNotice('Password updated with OTP in the prototype flow.')
-                }
+                className="ghost-button"
+                onClick={() => switchMode('signin')}
               >
-                Update password
+                Back
               </button>
             </div>
-          </>
-        ) : (
-          <>
+          </form>
+        )}
+
+        {authMode === 'signup' && (
+          <div className="auth-form">
+            <div className="role-picker">
+              {(['student', 'employer', 'instructor'] as SignupRole[]).map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  className={`role-choice ${signupRole === role ? 'active' : ''}`}
+                  onClick={() => setSignupRole(role)}
+                >
+                  <span>{roleIcons[role]}</span>
+                  {signupRoleLabels[role]}
+                </button>
+              ))}
+            </div>
+
             <div className="form-grid">
-              {authMode === 'employer-signup' ? (
+              {signupRole === 'employer' ? (
                 <>
                   <label>
-                    Company name
-                    <input defaultValue="Aurora Studio" />
+                    Company
+                    <input placeholder="Company name" />
                   </label>
                   <label>
-                    Company email
-                    <input defaultValue="hello@aurorastudio.io" />
+                    Company Email
+                    <input type="email" placeholder="company@email.com" />
                   </label>
                 </>
               ) : (
                 <>
                   <label>
-                    First name
-                    <input defaultValue="Nour" />
+                    First Name
+                    <input placeholder="First name" />
                   </label>
                   <label>
-                    Last name
-                    <input defaultValue="Mohmed" />
-                  </label>
-                  <label className="full-span">
-                    Email
-                    <input
-                      defaultValue={
-                        authMode === 'student-signup'
-                          ? 'nour.mohmed@student.guc.edu.eg'
-                          : 'nour.mohmed@guc.edu.eg'
-                      }
-                    />
+                    Last Name
+                    <input placeholder="Last name" />
                   </label>
                 </>
               )}
+              <label className="full-span">
+                Email
+                <input type="email" placeholder="Enter your email" />
+              </label>
               <label>
                 Password
-                <input type="password" defaultValue="Prototype123" />
+                <input type="password" placeholder="Create password" />
               </label>
               <label>
-                Confirm password
-                <input type="password" defaultValue="Prototype123" />
+                Confirm
+                <input type="password" placeholder="Confirm password" />
               </label>
             </div>
+
             <div className="button-row">
               <button
                 type="button"
-                className="primary-button"
-                onClick={() =>
-                  setAuthNotice(
-                    authMode === 'employer-signup'
-                      ? 'Employer registration draft created with document upload expected next.'
-                      : 'Account registration draft created for the prototype.'
-                  )
-                }
+                className="primary-button wide-button"
+                onClick={() => setAuthNotice(`${signupRoleLabels[signupRole]} account created!`)}
               >
-                Create account
+                Create Account
               </button>
             </div>
-          </>
+          </div>
         )}
 
-        {authNotice ? <div className="notice-banner">{authNotice}</div> : null}
+        {authMode === 'forgot' && (
+          <form className="auth-form" onSubmit={(e) => { e.preventDefault(); setAuthNotice('Reset link sent!'); }}>
+            <div className="form-grid">
+              <label className="full-span">
+                Email
+                <input type="email" placeholder="Enter your email" />
+              </label>
+            </div>
+            <div className="button-row">
+              <button type="submit" className="primary-button">
+                Send Reset Link
+              </button>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => switchMode('signin')}
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </form>
+        )}
+
+        {authNotice && <div className="notice-banner">{authNotice}</div>}
       </section>
     </div>
   );
