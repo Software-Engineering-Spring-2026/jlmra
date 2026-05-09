@@ -243,7 +243,22 @@ export const initialStudentProfile: StudentProfile = {
   skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS'],
   portfolioVisibility: 'Public',
   profilePicture: '',
-  thesisDrafts: [],
+  thesisDrafts: [
+    {
+      id: 'thesis-1',
+      title: 'Bachelor Thesis Draft 1.pdf',
+      fileUrl: '#',
+      uploadedAt: '18 Apr 2026',
+      isFinal: false,
+    },
+    {
+      id: 'thesis-2',
+      title: 'Bachelor Thesis Final Draft.pdf',
+      fileUrl: '#',
+      uploadedAt: '02 May 2026',
+      isFinal: true,
+    },
+  ],
 };
 
 export const initialProjects: Project[] = [
@@ -253,11 +268,11 @@ export const initialProjects: Project[] = [
     course: 'Bachelor Project',
     type: 'Capstone',
     createdAt: '12 Apr 2026',
-    github: 'github.com/linahassan/career-compass',
+    github: 'github.com/ahmedhossam/career-compass',
     languages: ['TypeScript', 'React', 'CSS'],
     demoVideoUrl: 'https://youtube.com/watch?v=demo1',
     reportUrl: '',
-    summary: 'A student-first portal that helps discover internships, compare portfolios, and manage project collaboration.',
+    summary: 'Internship discovery and project collaboration portal.',
     isFlagged: false,
     rating: 4.8,
     visibility: 'Public',
@@ -269,7 +284,7 @@ export const initialProjects: Project[] = [
       {
         id: 'task-1',
         title: 'Ship recruiter review dashboard',
-        owner: 'Lina',
+        owner: 'Ahmed',
         description: 'Build dashboard UI for recruiters',
         state: 'pending',
         due: 'Tomorrow',
@@ -297,14 +312,14 @@ export const initialProjects: Project[] = [
     feedback: [
       {
         id: 'feedback-1',
-        author: 'Dr. Maya El-Adl',
+        author: 'Jana Hassan',
         scope: 'General project feedback',
         visibility: 'Private',
         message: 'The user flow is strong. Tighten the internship comparison section so employers can scan it faster.',
       },
       {
         id: 'feedback-2',
-        author: 'Dr. Maya El-Adl',
+        author: 'Jana Hassan',
         scope: 'Task feedback',
         visibility: 'Private',
         message: 'Your card hierarchy works well. Add a stronger highlight for pending invitations.',
@@ -313,7 +328,7 @@ export const initialProjects: Project[] = [
     invitations: [
       {
         id: 'invite-1',
-        recipient: 'Dr. Maya El-Adl',
+        recipient: 'Jana Hassan',
         role: 'Course Instructor',
         status: 'Pending',
       },
@@ -331,7 +346,7 @@ export const initialProjects: Project[] = [
     course: 'CSEN 704',
     type: 'Course Project',
     createdAt: '04 Apr 2026',
-    github: 'github.com/linahassan/studio-queue',
+    github: 'github.com/ahmedhossam/studio-queue',
     languages: ['React', 'Node mock', 'SCSS'],
     demoVideoUrl: 'https://youtube.com/watch?v=demo2',
     reportUrl: '',
@@ -341,13 +356,13 @@ export const initialProjects: Project[] = [
     visibility: 'Private',
     featured: false,
     status: 'Draft',
-    collaborators: ['Nour Emad'],
+    collaborators: ['Rawan Elshamy'],
     tags: ['Tasks', 'Feedback', 'Collaboration'],
     tasks: [
       {
         id: 'task-4',
         title: 'Refine mobile layout',
-        owner: 'Lina',
+        owner: 'Ahmed',
         description: 'Build dashboard UI for recruiters',
         state: 'pending',
         due: 'Today',
@@ -356,7 +371,7 @@ export const initialProjects: Project[] = [
       {
         id: 'task-5',
         title: 'Confirm course tagging',
-        owner: 'Nour',
+        owner: 'Rawan',
         description: 'Record project demo video',
         state: 'postponed',
         due: 'Tomorrow',
@@ -387,7 +402,7 @@ export const initialProjects: Project[] = [
     course: 'CSEN 703',
     type: 'Course Project',
     createdAt: '24 Mar 2026',
-    github: 'github.com/linahassan/campus-bazaar',
+    github: 'github.com/ahmedhossam/campus-bazaar',
     languages: ['React', 'Framer mock', 'Chart UI'],
     demoVideoUrl: 'https://youtube.com/watch?v=demo3',
     reportUrl: '',
@@ -397,13 +412,13 @@ export const initialProjects: Project[] = [
     visibility: 'Public',
     featured: false,
     status: 'Final Draft',
-    collaborators: ['Mariam Tamer', 'Nadine Fares'],
+    collaborators: ['Rawan Elshamy', 'Nadine Fares'],
     tags: ['Marketplace', 'Analytics', 'Portfolio'],
     tasks: [
       {
         id: 'task-6',
         title: 'Update persona slides',
-        owner: 'Mariam',
+        owner: 'Rawan',
         description: 'Create testing checklist',
         state: 'completed',
         due: 'Done',
@@ -412,7 +427,7 @@ export const initialProjects: Project[] = [
       {
         id: 'task-7',
         title: 'Simplify save-to-favorites flow',
-        owner: 'Lina',
+        owner: 'Ahmed',
         description: 'Record project demo video',
         state: 'postponed',
         due: 'Friday',
@@ -431,7 +446,7 @@ export const initialProjects: Project[] = [
     invitations: [
       {
         id: 'invite-4',
-        recipient: 'Mariam Tamer',
+        recipient: 'Rawan Elshamy',
         role: 'Student',
         status: 'Accepted',
       },
@@ -460,7 +475,7 @@ export const initialInternships: Internship[] = [
     applications: [
       {
         id: 'application-1',
-        student: 'Lina Hassan',
+        student: 'Ahmed Hossam',
         university: 'GUC',
         status: 'Applied',
         score: 92,
@@ -496,7 +511,7 @@ export const initialInternships: Internship[] = [
     applications: [
       {
         id: 'application-3',
-        student: 'Lina Hassan',
+        student: 'Ahmed Hossam',
         university: 'GUC',
         status: 'Shortlisted',
         score: 95,
@@ -543,7 +558,7 @@ export const initialInternships: Internship[] = [
     applications: [
       {
         id: 'application-4',
-        student: 'Lina Hassan',
+        student: 'Ahmed Hossam',
         university: 'GUC',
         status: 'Accepted',
         score: 90,
@@ -621,8 +636,8 @@ export const initialCompanyRequests: CompanyRequest[] = [
   {
     id: 'company-1',
     companyName: 'Bright Labs',
-    owner: 'Mariam Saad',
-    companyEmail: 'talent@brightlabs.io',
+    owner: 'Lara Ahmed',
+    companyEmail: 'lara.ahmed@brightlabs.io',
     address: '5A Innovation District, New Cairo',
     summary: 'Product consultancy hiring interns for frontend, research, and analytics roles.',
     documents: ['Tax Certificate.pdf', 'Commercial Register.pdf'],
@@ -718,13 +733,13 @@ export const initialCourses: Course[] = [
   {
     code: 'BP401',
     name: 'Bachelor Project',
-    instructor: 'Dr. Maya El-Adl',
+    instructor: 'Jana Hassan',
     linked: true,
   },
   {
     code: 'CSEN 704',
     name: 'Interaction Design Studio',
-    instructor: 'Dr. Maya El-Adl',
+    instructor: 'Jana Hassan',
     linked: true,
   },
   {
@@ -732,6 +747,7 @@ export const initialCourses: Course[] = [
     name: 'Frontend Product Engineering',
     instructor: 'Dr. Salma Nabil',
     linked: false,
+    linkRequestStatus: 'Pending',
   },
   {
     code: 'CSEN 702',
@@ -745,7 +761,7 @@ export const initialAppeals: Appeal[] = [
   {
     id: 'appeal-1',
     projectTitle: 'Career Compass',
-    raisedBy: 'Lina Hassan',
+    raisedBy: 'Ahmed Hossam',
     reason: 'A project section was flagged for possible uncredited assets.',
     studentMessage: 'The animations are licensed from our team kit. I have now attached attribution in the project notes.',
     status: 'Pending Review',
@@ -764,7 +780,7 @@ export const initialNotifications: NotificationItem[] = [
   {
     id: 'note-1',
     title: 'Course instructor invitation sent',
-    message: 'Dr. Maya El-Adl was invited to collaborate on Career Compass.',
+    message: 'Jana Hassan was invited to collaborate on Career Compass.',
     time: '5 min ago',
     audience: ['student'],
     read: false,
@@ -791,7 +807,7 @@ export const initialNotifications: NotificationItem[] = [
   {
     id: 'note-4',
     title: 'New shortlisted candidate',
-    message: 'Lina Hassan moved to shortlisted for UI Engineer Intern.',
+    message: 'Ahmed Hossam moved to shortlisted for UI Engineer Intern.',
     time: '1 hr ago',
     audience: ['student', 'employer'],
     read: true,
@@ -821,7 +837,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
   student: [
     {
       id: 'student-conversation-1',
-      name: 'Mariam Saad',
+      name: 'Lara Ahmed',
       role: 'Employer',
       subtitle: 'Bright Labs',
       unread: 2,
@@ -848,7 +864,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
     },
     {
       id: 'student-conversation-2',
-      name: 'Dr. Maya El-Adl',
+      name: 'Jana Hassan',
       role: 'Course Instructor',
       subtitle: 'Bachelor Project',
       unread: 0,
@@ -886,7 +902,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
   employer: [
     {
       id: 'employer-conversation-1',
-      name: 'Lina Hassan',
+      name: 'Ahmed Hossam',
       role: 'Student',
       subtitle: 'Career Compass portfolio',
       unread: 1,
@@ -907,7 +923,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
     },
     {
       id: 'employer-conversation-2',
-      name: 'Nour Mohmed',
+      name: 'Malak Ebraheem',
       role: 'Administrator',
       subtitle: 'Company verification',
       unread: 0,
@@ -922,7 +938,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
     },
     {
       id: 'employer-conversation-3',
-      name: 'Dr. Maya El-Adl',
+      name: 'Jana Hassan',
       role: 'Course Instructor',
       subtitle: 'Internship feedback',
       unread: 0,
@@ -939,7 +955,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
   instructor: [
     {
       id: 'instructor-conversation-1',
-      name: 'Lina Hassan',
+      name: 'Ahmed Hossam',
       role: 'Student',
       subtitle: 'Career Compass review',
       unread: 1,
@@ -954,7 +970,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
     },
     {
       id: 'instructor-conversation-2',
-      name: 'Nour Mohmed',
+      name: 'Malak Ebraheem',
       role: 'Administrator',
       subtitle: 'Course link request',
       unread: 0,
@@ -986,7 +1002,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
   admin: [
     {
       id: 'admin-conversation-1',
-      name: 'Mariam Saad',
+      name: 'Lara Ahmed',
       role: 'Employer',
       subtitle: 'Bright Labs approval',
       unread: 1,
@@ -1001,7 +1017,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
     },
     {
       id: 'admin-conversation-2',
-      name: 'Dr. Maya El-Adl',
+      name: 'Jana Hassan',
       role: 'Course Instructor',
       subtitle: 'Flagged project review',
       unread: 0,
@@ -1016,7 +1032,7 @@ export const initialConversationsByRole: Record<Role, Conversation[]> = {
     },
     {
       id: 'admin-conversation-3',
-      name: 'Lina Hassan',
+      name: 'Ahmed Hossam',
       role: 'Student',
       subtitle: 'Appeal follow-up',
       unread: 0,

@@ -1,4 +1,5 @@
 import { type Role } from './mockData';
+import { type IconName } from './components/icons';
 
 export type WorkspacePage =
   | 'dashboard'
@@ -12,6 +13,7 @@ export type WorkspacePage =
   | 'approvals'
   | 'users'
   | 'analytics'
+  | 'directory'
   | 'inbox'
   | 'notifications';
 
@@ -29,6 +31,7 @@ export type PageMeta = {
   id: WorkspacePage;
   label: string;
   description: string;
+  icon: IconName;
 };
 
 // Demo login data:
@@ -88,35 +91,39 @@ export const demoAccounts: DemoAccount[] = [
 
 export const pagesByRole: Record<Role, PageMeta[]> = {
   student: [
-    { id: 'dashboard', label: 'Dashboard', description: 'Home' },
-    { id: 'portfolio', label: 'Portfolio', description: 'Your profile' },
-    { id: 'projects', label: 'Projects', description: 'Manage projects' },
-    { id: 'internships', label: 'Internships', description: 'Find opportunities' },
-    { id: 'inbox', label: 'Messages', description: 'Chat' },
-    { id: 'notifications', label: 'Notifications', description: 'Alerts' },
+    { id: 'dashboard', label: 'Dashboard', description: 'Home', icon: 'dashboard' },
+    { id: 'portfolio', label: 'Portfolio', description: 'Your profile', icon: 'portfolio' },
+    { id: 'projects', label: 'Projects', description: 'Manage projects', icon: 'folder' },
+    { id: 'internships', label: 'Internships', description: 'Find opportunities', icon: 'briefcase' },
+    { id: 'directory', label: 'Directory', description: 'Search', icon: 'search' },
+    { id: 'inbox', label: 'Messages', description: 'Chat', icon: 'mail' },
+    { id: 'notifications', label: 'Notifications', description: 'Alerts', icon: 'bell' },
   ],
   employer: [
-    { id: 'dashboard', label: 'Dashboard', description: 'Overview' },
-    { id: 'profile', label: 'Company', description: 'Profile' },
-    { id: 'internships', label: 'Internships', description: 'Postings' },
-    { id: 'applicants', label: 'Applicants', description: 'Candidates' },
-    { id: 'inbox', label: 'Messages', description: 'Chat' },
-    { id: 'notifications', label: 'Notifications', description: 'Alerts' },
+    { id: 'dashboard', label: 'Dashboard', description: 'Overview', icon: 'dashboard' },
+    { id: 'profile', label: 'Company', description: 'Profile', icon: 'building' },
+    { id: 'internships', label: 'Internships', description: 'Postings', icon: 'briefcase' },
+    { id: 'applicants', label: 'Applicants', description: 'Candidates', icon: 'users' },
+    { id: 'directory', label: 'Directory', description: 'Search', icon: 'search' },
+    { id: 'inbox', label: 'Messages', description: 'Chat', icon: 'mail' },
+    { id: 'notifications', label: 'Notifications', description: 'Alerts', icon: 'bell' },
   ],
   instructor: [
-    { id: 'dashboard', label: 'Dashboard', description: 'Overview' },
-    { id: 'profile', label: 'Profile', description: 'Your info' },
-    { id: 'courses', label: 'Courses', description: 'Teaching' },
-    { id: 'reviews', label: 'Reviews', description: 'Grade projects' },
-    { id: 'inbox', label: 'Messages', description: 'Chat' },
-    { id: 'notifications', label: 'Notifications', description: 'Alerts' },
+    { id: 'dashboard', label: 'Dashboard', description: 'Overview', icon: 'dashboard' },
+    { id: 'profile', label: 'Profile', description: 'Your info', icon: 'user' },
+    { id: 'courses', label: 'Courses', description: 'Teaching', icon: 'portfolio' },
+    { id: 'reviews', label: 'Reviews', description: 'Grade projects', icon: 'review' },
+    { id: 'directory', label: 'Directory', description: 'Search', icon: 'search' },
+    { id: 'inbox', label: 'Messages', description: 'Chat', icon: 'mail' },
+    { id: 'notifications', label: 'Notifications', description: 'Alerts', icon: 'bell' },
   ],
   admin: [
-    { id: 'dashboard', label: 'Dashboard', description: 'Overview' },
-    { id: 'approvals', label: 'Approvals', description: 'Verify' },
-    { id: 'users', label: 'Users', description: 'Manage' },
-    { id: 'analytics', label: 'Analytics', description: 'Stats' },
-    { id: 'inbox', label: 'Messages', description: 'Chat' },
-    { id: 'notifications', label: 'Notifications', description: 'Alerts' },
+    { id: 'dashboard', label: 'Dashboard', description: 'Overview', icon: 'dashboard' },
+    { id: 'approvals', label: 'Approvals', description: 'Verify', icon: 'check' },
+    { id: 'users', label: 'Users', description: 'Manage', icon: 'users' },
+    { id: 'analytics', label: 'Analytics', description: 'Stats', icon: 'analytics' },
+    { id: 'directory', label: 'Directory', description: 'Search', icon: 'search' },
+    { id: 'inbox', label: 'Messages', description: 'Chat', icon: 'mail' },
+    { id: 'notifications', label: 'Notifications', description: 'Alerts', icon: 'bell' },
   ],
 };

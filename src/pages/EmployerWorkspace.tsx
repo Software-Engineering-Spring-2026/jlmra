@@ -93,7 +93,7 @@ export function EmployerWorkspace({
           <PageHeader
             eyebrow="Employer dashboard"
             title={employerProfile.companyName}
-            description="This dashboard now summarizes the hiring story before you move into more detailed pages."
+            description="Hiring, applicants, and company status."
             action={
               <button
                 type="button"
@@ -127,8 +127,7 @@ export function EmployerWorkspace({
             />
           </div>
           <div className="content-grid">
-            <Panel title="Company summary" subtitle="A quick overview before deeper pages">
-              <p>{employerProfile.summary}</p>
+            <Panel title="Company summary" subtitle="Profile snapshot">
               <div className="simple-list">
                 <div className="simple-list-item">
                   <strong>Address</strong>
@@ -161,7 +160,7 @@ export function EmployerWorkspace({
           <PageHeader
             eyebrow="Company profile"
             title={employerProfile.companyName}
-            description="The company page is now dedicated to profile data, uploaded documents, and verification details."
+            description="Company details, map location, and documents."
             action={
               <button type="button" className="primary-button" onClick={saveEmployerProfile}>
                 Save Company Profile
@@ -253,7 +252,7 @@ export function EmployerWorkspace({
           <PageHeader
             eyebrow="Employer internships"
             title="Openings"
-            description="Internship creation and editing now live on their own page instead of being buried inside a larger dashboard."
+            description="Create, edit, archive, and fill positions."
             action={
               <button type="button" className="ghost-button" onClick={clearInternshipDraft}>
                 Clear Form
@@ -395,7 +394,7 @@ export function EmployerWorkspace({
           <PageHeader
             eyebrow="Employer applicants"
             title="Applicants by internship"
-            description="This page is intentionally separate so reviewing students feels like a focused hiring task."
+            description="Review applicants and update statuses."
           />
           <div className="stack-list">
             {employerInternships.map((internship) => (

@@ -73,7 +73,7 @@ export function InstructorWorkspace({
           <PageHeader
             eyebrow="Instructor dashboard"
             title={instructorProfile.name}
-            description="The instructor home page is now lighter and points you toward courses and reviews instead of mixing every workflow together."
+            description="Courses, reviews, and invitations."
             action={
               <button
                 type="button"
@@ -133,7 +133,7 @@ export function InstructorWorkspace({
           <PageHeader
             eyebrow="Instructor profile"
             title={instructorProfile.name}
-            description="A dedicated profile page makes it much clearer what information students and admins see for the instructor."
+            description="Biography, education, and research interests."
             action={
               <button
                 type="button"
@@ -222,7 +222,7 @@ export function InstructorWorkspace({
           <PageHeader
             eyebrow="Instructor courses"
             title="Course links"
-            description="The course page now focuses just on available courses and whether they are linked to the instructor profile."
+            description="Link and unlink teaching courses."
           />
           <div className="stack-list">
             {courses.map((course) => (
@@ -262,7 +262,7 @@ export function InstructorWorkspace({
           <PageHeader
             eyebrow="Instructor reviews"
             title="Project review workspace"
-            description="Feedback, ratings, and flagging are now grouped into one review page so the instructor flow feels deliberate."
+            description="Comments, ratings, and flags."
           />
           <div className="stack-list">
             {projects.map((project) => (
@@ -276,7 +276,6 @@ export function InstructorWorkspace({
                   </div>
                   <Badge tone="accent">{project.rating.toFixed(1)}/5</Badge>
                 </div>
-                <p>{project.summary}</p>
                 <div className="rating-row">
                   <div className="star-rating" aria-label={`Rate ${project.title}`}>
                     {[1, 2, 3, 4, 5].map((rating) => (

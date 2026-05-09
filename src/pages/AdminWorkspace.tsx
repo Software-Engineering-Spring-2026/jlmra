@@ -24,9 +24,18 @@ type AdminWorkspaceProps = {
   appeals: Appeal[];
   resolveAppeal: (appealId: string) => void;
   users: UserAccount[];
+  createAdminAccount: () => void;
   toggleUserStatus: (userId: string) => void;
   courses: Course[];
+  createCourse: () => void;
+  deleteCourse: (code: string) => void;
+  reviewCourseLinkRequest: (
+    code: string,
+    linkRequestStatus: 'Approved' | 'Rejected'
+  ) => void;
   projects: Project[];
+  toggleProjectActivation: (projectId: string) => void;
+  downloadCompanyDocument: (companyName: string, document: string) => void;
   featuredProject: Project;
   instructorProfile: InstructorProfile;
   setCurrentPage: (page: WorkspacePage) => void;
@@ -50,9 +59,15 @@ export function AdminWorkspace({
   appeals,
   resolveAppeal,
   users,
+  createAdminAccount,
   toggleUserStatus,
   courses,
+  createCourse,
+  deleteCourse,
+  reviewCourseLinkRequest,
   projects,
+  toggleProjectActivation,
+  downloadCompanyDocument,
   featuredProject,
   instructorProfile,
   setCurrentPage,
@@ -75,7 +90,7 @@ export function AdminWorkspace({
           <PageHeader
             eyebrow="Administrator dashboard"
             title="Platform overview"
-            description="The admin role now opens on a simple platform summary instead of a crowded multi-purpose screen."
+            description="Users, approvals, courses, and platform status."
             action={
               <button
                 type="button"
@@ -139,7 +154,7 @@ export function AdminWorkspace({
           <PageHeader
             eyebrow="Administrator approvals"
             title="Employer approvals and appeals"
-            description="This page keeps the approval flow much simpler by separating company review from everything else."
+            description="Company verification and project appeals."
           />
           <div className="content-grid content-grid-wide">
             <Panel title="Company approvals" subtitle="Documents and decisions">
@@ -163,12 +178,25 @@ export function AdminWorkspace({
                         {request.status}
                       </Badge>
                     </div>
-                    <p>{request.summary}</p>
                     <div className="simple-list">
                       {request.documents.map((document) => (
                         <div key={document} className="simple-list-item">
                           <strong>{document}</strong>
                           <span>Uploaded PDF</span>
+                          <div className="button-row">
+                            <button type="button" className="ghost-button">
+                              View
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost-button"
+                              onClick={() =>
+                                downloadCompanyDocument(request.companyName, document)
+                              }
+                            >
+                              Download
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -218,6 +246,30 @@ export function AdminWorkspace({
                 ))}
               </div>
             </Panel>
+            <Panel title="Flagged projects" subtitle="Activate or deactivate">
+              <div className="stack-list">
+                {projects
+                  .filter((project) => project.isFlagged)
+                  .map((project) => (
+                    <article key={project.id} className="list-card">
+                      <div className="list-card-head">
+                        <div>
+                          <strong>{project.title}</strong>
+                          <span>{project.flagReason ?? 'Flagged for review'}</span>
+                        </div>
+                        <Badge tone="warn">Deactivated</Badge>
+                      </div>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => toggleProjectActivation(project.id)}
+                      >
+                        Reactivate Project
+                      </button>
+                    </article>
+                  ))}
+              </div>
+            </Panel>
           </div>
         </div>
       );
@@ -227,7 +279,12 @@ export function AdminWorkspace({
           <PageHeader
             eyebrow="Administrator users"
             title="Users and courses"
-            description="The users page now focuses on account activation while keeping course data in a second panel."
+            description="Accounts, roles, activation, and course directory."
+            action={
+              <button type="button" className="primary-button" onClick={createAdminAccount}>
+                Create Admin
+              </button>
+            }
           />
           <div className="content-grid content-grid-wide">
             <Panel title="User directory" subtitle="Students, employers, instructors, and admins">
@@ -257,7 +314,15 @@ export function AdminWorkspace({
                 ))}
               </div>
             </Panel>
-            <Panel title="Course directory" subtitle="Available courses in the platform">
+            <Panel
+              title="Course directory"
+              subtitle="Create, edit, delete, and review links"
+              action={
+                <button type="button" className="ghost-button" onClick={createCourse}>
+                  Create Course
+                </button>
+              }
+            >
               <div className="stack-list">
                 {courses.map((course) => (
                   <article key={course.code} className="list-card">
@@ -272,6 +337,42 @@ export function AdminWorkspace({
                         {course.linked ? 'Linked' : 'Standalone'}
                       </Badge>
                     </div>
+                    <div className="button-row">
+                      {course.linkRequestStatus === 'Pending' ? (
+                        <>
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={() =>
+                              reviewCourseLinkRequest(course.code, 'Approved')
+                            }
+                          >
+                            Accept Link
+                          </button>
+                          <button
+                            type="button"
+                            className="ghost-button danger"
+                            onClick={() =>
+                              reviewCourseLinkRequest(course.code, 'Rejected')
+                            }
+                          >
+                            Reject Link
+                          </button>
+                        </>
+                      ) : (
+                        <Badge tone="neutral">
+                          {course.linkRequestStatus ?? 'No request'}
+                        </Badge>
+                      )}
+                      <button
+                        type="button"
+                        className="ghost-button danger"
+                        disabled={course.code === 'BP401'}
+                        onClick={() => deleteCourse(course.code)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -285,7 +386,7 @@ export function AdminWorkspace({
           <PageHeader
             eyebrow="Administrator analytics"
             title="Platform analytics"
-            description="Instead of burying analytics among other controls, this page now shows clean summary cards and progress bars."
+            description="Usage, projects, courses, and engagement."
           />
           <div className="stats-grid">
             <StatCard
@@ -299,9 +400,9 @@ export function AdminWorkspace({
               helper="Projects that can receive feedback and appear on student portfolios."
             />
             <StatCard
-              label="Top project"
-              value={featuredProject.title}
-              helper="The most highlighted project in the current prototype view."
+              label="Total courses"
+              value={String(courses.length)}
+              helper={`Top project: ${featuredProject.title}.`}
             />
           </div>
           <div className="content-grid">

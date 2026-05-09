@@ -27,6 +27,19 @@ type StudentWorkspaceProps = {
   setFeaturedProjectById: (projectId: string) => void;
   saveStudentProfile: () => void;
   addTaskToProject: (projectId: string) => void;
+  createStudentProject: () => void;
+  updateProjectTitle: (projectId: string, title: string) => void;
+  deleteProject: (projectId: string) => void;
+  markProjectFinalDraft: (projectId: string) => void;
+  updateInvitationStatus: (
+    projectId: string,
+    invitationId: string,
+    status: Project['invitations'][number]['status']
+  ) => void;
+  removeCollaborator: (projectId: string, collaborator: string) => void;
+  moveTaskToTop: (projectId: string, taskId: string) => void;
+  uploadThesisDraft: () => void;
+  setFinalThesisDraft: (draftId: string) => void;
   taskDrafts: Record<string, string>;
   setTaskDrafts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   applyToInternship: (internshipId: string) => void;
@@ -60,6 +73,15 @@ export function StudentWorkspace({
   setFeaturedProjectById,
   saveStudentProfile,
   addTaskToProject,
+  createStudentProject,
+  updateProjectTitle,
+  deleteProject,
+  markProjectFinalDraft,
+  updateInvitationStatus,
+  removeCollaborator,
+  moveTaskToTop,
+  uploadThesisDraft,
+  setFinalThesisDraft,
   taskDrafts,
   setTaskDrafts,
   applyToInternship,
@@ -83,7 +105,7 @@ export function StudentWorkspace({
           <PageHeader
             eyebrow="Student dashboard"
             title={`Welcome back, ${studentProfile.name.split(' ')[0]}`}
-            description="This version starts with only the most useful student information instead of showing everything at once."
+            description="Projects, internships, and alerts."
             action={
               <button
                 type="button"
@@ -103,7 +125,7 @@ export function StudentWorkspace({
             <StatCard
               label="Active projects"
               value={String(projects.length)}
-              helper="Projects now live on their own page with tasks and feedback kept separate."
+              helper="Projects, tasks, and feedback are grouped clearly."
             />
             <StatCard
               label="Applications sent"
@@ -120,7 +142,6 @@ export function StudentWorkspace({
               title="Featured project"
               subtitle={`${featuredProject.course} · ${featuredProject.status}`}
             >
-              <p>{featuredProject.summary}</p>
               <div className="tag-row">
                 <Badge tone="success">{featuredProject.visibility}</Badge>
                 <Badge tone="accent">{featuredProject.rating.toFixed(1)}/5</Badge>
@@ -136,7 +157,7 @@ export function StudentWorkspace({
                 ))}
               </div>
             </Panel>
-            <Panel title="Current hiring pipeline" subtitle="A lighter summary before the full internship page">
+            <Panel title="Current hiring pipeline" subtitle="Active applications">
               <div className="simple-list">
                 {internships
                   .filter((internship) => internship.applicationStatus !== 'Not Applied')
@@ -159,7 +180,7 @@ export function StudentWorkspace({
           <PageHeader
             eyebrow="Student portfolio"
             title={studentProfile.name}
-            description="This page now focuses only on the student identity, public portfolio basics, and featured work."
+            description="Public profile and featured work."
             action={
               <button type="button" className="primary-button" onClick={saveStudentProfile}>
                 Save Changes
@@ -285,8 +306,46 @@ export function StudentWorkspace({
           <PageHeader
             eyebrow="Student projects"
             title="Project library"
-            description="Projects now have their own page, so tasks, visibility, and feedback are grouped by project instead of mixed with everything else."
+            description="Projects, tasks, invitations, and feedback."
+            action={
+              <button type="button" className="primary-button" onClick={createStudentProject}>
+                Create Project
+              </button>
+            }
           />
+          <Panel
+            title="Bachelor thesis drafts"
+            subtitle="Only the final draft is public"
+            action={
+              <button type="button" className="ghost-button" onClick={uploadThesisDraft}>
+                Upload Draft
+              </button>
+            }
+          >
+            <div className="simple-list">
+              {studentProfile.thesisDrafts.map((draft) => (
+                <div key={draft.id} className="simple-list-item">
+                  <strong>{draft.title}</strong>
+                  <span>
+                    {draft.uploadedAt} · {draft.isFinal ? 'Final public draft' : 'Private draft'}
+                  </span>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => setFinalThesisDraft(draft.id)}
+                  >
+                    Set Final Draft
+                  </button>
+                </div>
+              ))}
+              {studentProfile.thesisDrafts.length === 0 ? (
+                <div className="simple-list-item">
+                  <strong>No thesis drafts yet</strong>
+                  <span>Upload is required for Bachelor Project.</span>
+                </div>
+              ) : null}
+            </div>
+          </Panel>
           <div className="stack-list">
             {projects.map((project) => (
               <article key={project.id} className="project-card">
@@ -302,7 +361,17 @@ export function StudentWorkspace({
                     <Badge tone="accent">{project.status}</Badge>
                   </div>
                 </div>
-                <p>{project.summary}</p>
+                <div className="form-grid">
+                  <label className="full-span">
+                    Project title
+                    <input
+                      value={project.title}
+                      onChange={(event) =>
+                        updateProjectTitle(project.id, event.target.value)
+                      }
+                    />
+                  </label>
+                </div>
                 <div className="button-row">
                   <button
                     type="button"
@@ -318,8 +387,44 @@ export function StudentWorkspace({
                   >
                     Make Featured
                   </button>
+                  {project.course === 'Bachelor Project' ? (
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => markProjectFinalDraft(project.id)}
+                    >
+                      Set Final Draft
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="ghost-button danger"
+                    onClick={() => deleteProject(project.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
                 <div className="content-grid">
+                  <Panel title="Project details" subtitle="Course, links, and languages">
+                    <div className="simple-list">
+                      <div className="simple-list-item">
+                        <strong>Course</strong>
+                        <span>{project.course}</span>
+                      </div>
+                      <div className="simple-list-item">
+                        <strong>GitHub</strong>
+                        <span>{project.github}</span>
+                      </div>
+                      <div className="simple-list-item">
+                        <strong>Languages</strong>
+                        <span>{project.languages.join(', ')}</span>
+                      </div>
+                      <div className="simple-list-item">
+                        <strong>Demo video</strong>
+                        <span>{project.demoVideoUrl}</span>
+                      </div>
+                    </div>
+                  </Panel>
                   <Panel title="Tasks" subtitle="Ordered list for the project owner">
                     <div className="simple-list">
                       {project.tasks.map((task) => (
@@ -328,6 +433,13 @@ export function StudentWorkspace({
                           <span>
                             {task.owner} · {task.state}
                           </span>
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={() => moveTaskToTop(project.id, task.id)}
+                          >
+                            Move Top
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -361,6 +473,64 @@ export function StudentWorkspace({
                       ))}
                     </div>
                   </Panel>
+                  <Panel title="Invitations" subtitle="Send, cancel, accept, or reject">
+                    <div className="simple-list">
+                      {project.invitations.map((invitation) => (
+                        <div key={invitation.id} className="simple-list-item">
+                          <strong>{invitation.recipient}</strong>
+                          <span>
+                            {invitation.role} · {invitation.status}
+                          </span>
+                          <div className="button-row">
+                            <button
+                              type="button"
+                              className="ghost-button"
+                              onClick={() =>
+                                updateInvitationStatus(project.id, invitation.id, 'Pending')
+                              }
+                            >
+                              Send
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost-button"
+                              onClick={() =>
+                                updateInvitationStatus(project.id, invitation.id, 'Accepted')
+                              }
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost-button danger"
+                              onClick={() =>
+                                updateInvitationStatus(project.id, invitation.id, 'Rejected')
+                              }
+                            >
+                              Reject / Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Panel>
+                  <Panel title="Collaborators" subtitle="Project creator controls">
+                    <div className="simple-list">
+                      {project.collaborators.map((collaborator) => (
+                        <div key={collaborator} className="simple-list-item">
+                          <strong>{collaborator}</strong>
+                          <span>Active collaborator</span>
+                          <button
+                            type="button"
+                            className="ghost-button danger"
+                            onClick={() => removeCollaborator(project.id, collaborator)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </Panel>
                 </div>
               </article>
             ))}
@@ -373,7 +543,7 @@ export function StudentWorkspace({
           <PageHeader
             eyebrow="Student internships"
             title="Search and apply"
-            description="The internship experience is now isolated to one page with a simple search bar, cover letter area, and action buttons."
+            description="Search, filter, apply, and save favorites."
           />
           <Panel title="Search internships" subtitle="Filter by title, company, location, or duration">
             <div className="form-grid">
@@ -440,7 +610,7 @@ export function StudentWorkspace({
                     className="ghost-button"
                     onClick={() => toggleInternshipFavorite(internship.id)}
                   >
-                    {internship.favorite ? 'Remove Favorite' : 'Save Favorite'}
+                    {internship.favorite ? '⭐ Remove Favorite' : '⭐ Favorite'}
                   </button>
                 </div>
               </article>

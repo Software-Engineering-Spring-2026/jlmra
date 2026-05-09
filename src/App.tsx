@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { demoAccounts, pagesByRole, type WorkspacePage } from './appConfig';
-import { Badge } from './components/ui';
+import { Icon } from './components/icons';
 import { LoginScreen } from './pages/LoginScreen';
 import { StudentWorkspace } from './pages/StudentWorkspace';
 import { EmployerWorkspace } from './pages/EmployerWorkspace';
 import { InstructorWorkspace } from './pages/InstructorWorkspace';
 import { AdminWorkspace } from './pages/AdminWorkspace';
+import { DirectoryPage } from './pages/DirectoryPage';
 import {
   type Appeal,
   type CompanyRequest,
@@ -63,9 +64,9 @@ const defaultNotificationPreferences: Record<Role, boolean> = {
 };
 
 const fontSizeByScale: Record<FontScale, string> = {
-  small: '15px',
-  medium: '16px',
-  large: '18px',
+  small: '17px',
+  medium: '18px',
+  large: '19px',
 };
 
 const allPages = new Set<WorkspacePage>(
@@ -104,17 +105,17 @@ const buildHash = (
 
 function App() {
   const [session, setSession] = useState<(typeof demoAccounts)[number] | null>(
-    demoAccounts[0]
+    null
   );
-  const [currentPage, setCurrentPage] = useState<WorkspacePage>(
-    demoAccounts[0].landingPage
-  );
+  const [currentPage, setCurrentPage] = useState<WorkspacePage>('dashboard');
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',
     otp: '',
   });
-  const [pendingLoginAccount, setPendingLoginAccount] = useState<(typeof demoAccounts)[number] | null>(null);
+  const [pendingLoginAccount, setPendingLoginAccount] = useState<
+    (typeof demoAccounts)[number] | null
+  >(null);
   const [loginError, setLoginError] = useState('');
 
   const [studentProfile, setStudentProfile] =
@@ -155,10 +156,9 @@ function App() {
   const [editingInternshipId, setEditingInternshipId] = useState<string | null>(
     null
   );
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [fontScale, setFontScale] = useState<FontScale>('medium');
+  const [fontScale, setFontScale] = useState<FontScale>('large');
+  const [saveNotice, setSaveNotice] = useState('');
 
 
   const activeRole = session?.role ?? 'student';
@@ -210,8 +210,6 @@ function App() {
 
       setCurrentPage(page);
       setSelectedConversationId(page === 'inbox' ? conversationId : null);
-      setIsSidebarOpen(false);
-      setIsSettingsOpen(false);
 
       const nextHash = buildHash(
         session.role,
@@ -326,25 +324,37 @@ function App() {
     setSession(pendingLoginAccount);
     setCurrentPage(pendingLoginAccount.landingPage);
     setSelectedConversationId(null);
-    setIsSidebarOpen(false);
-    setIsSettingsOpen(false);
     setLoginForm({ email: '', password: '', otp: '' });
     setPendingLoginAccount(null);
     setLoginError('');
+    window.location.hash = buildHash(
+      pendingLoginAccount.role,
+      pendingLoginAccount.landingPage
+    );
   };
 
   const handleLogout = () => {
     setSession(null);
     setCurrentPage('dashboard');
     setSelectedConversationId(null);
-    setIsSidebarOpen(false);
-    setIsSettingsOpen(false);
     setLoginForm({ email: '', password: '', otp: '' });
     setPendingLoginAccount(null);
     setLoginError('');
+    setSaveNotice('');
     if (window.location.hash !== '#/login') {
       window.location.hash = '#/login';
     }
+  };
+
+  const showSaveNotice = (message: string) => {
+    setSaveNotice(message);
+    window.setTimeout(() => setSaveNotice(''), 2200);
+  };
+
+  const cycleFontScale = () => {
+    setFontScale((current) =>
+      current === 'small' ? 'medium' : current === 'medium' ? 'large' : 'small'
+    );
   };
 
   const toggleNotificationRead = (notificationId: string) => {
@@ -423,6 +433,152 @@ function App() {
     });
   };
 
+  const createStudentProject = () => {
+    const projectNumber = projects.length + 1;
+
+    setProjects((current) => [
+      {
+        id: createId('project'),
+        title: `New Bachelor Project ${projectNumber}`,
+        course: 'Bachelor Project',
+        type: 'Capstone',
+        createdAt: 'Today',
+        github: 'github.com/ahmedhossam/new-project',
+        languages: ['React', 'TypeScript'],
+        demoVideoUrl: 'https://youtube.com/watch?v=new-demo',
+        reportUrl: '',
+        summary: 'New project created from the prototype.',
+        rating: 0,
+        visibility: 'Private',
+        featured: false,
+        status: 'Draft',
+        collaborators: [],
+        tags: ['Prototype'],
+        tasks: [],
+        feedback: [],
+        invitations: [],
+        isFlagged: false,
+      },
+      ...current,
+    ]);
+    addNotification({
+      title: 'Project created',
+      message: 'A new Bachelor Project draft was created.',
+      audience: ['student'],
+    });
+  };
+
+  const updateProjectTitle = (projectId: string, title: string) => {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId ? { ...project, title } : project
+      )
+    );
+  };
+
+  const deleteProject = (projectId: string) => {
+    setProjects((current) => current.filter((project) => project.id !== projectId));
+    addNotification({
+      title: 'Project deleted',
+      message: 'The selected project was removed from the prototype list.',
+      audience: ['student'],
+      tone: 'warn',
+    });
+  };
+
+  const markProjectFinalDraft = (projectId: string) => {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId
+          ? { ...project, status: 'Final Draft', visibility: 'Public' }
+          : project.course === 'Bachelor Project'
+          ? { ...project, status: 'Draft', visibility: 'Private' }
+          : project
+      )
+    );
+  };
+
+  const updateInvitationStatus = (
+    projectId: string,
+    invitationId: string,
+    status: 'Pending' | 'Accepted' | 'Rejected'
+  ) => {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              invitations: project.invitations.map((invitation) =>
+                invitation.id === invitationId ? { ...invitation, status } : invitation
+              ),
+            }
+          : project
+      )
+    );
+  };
+
+  const removeCollaborator = (projectId: string, collaborator: string) => {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              collaborators: project.collaborators.filter((item) => item !== collaborator),
+            }
+          : project
+      )
+    );
+  };
+
+  const moveTaskToTop = (projectId: string, taskId: string) => {
+    setProjects((current) =>
+      current.map((project) => {
+        if (project.id !== projectId) {
+          return project;
+        }
+
+        const selectedTask = project.tasks.find((task) => task.id === taskId);
+        const otherTasks = project.tasks.filter((task) => task.id !== taskId);
+
+        return selectedTask
+          ? {
+              ...project,
+              tasks: [selectedTask, ...otherTasks].map((task, index) => ({
+                ...task,
+                order: index + 1,
+              })),
+            }
+          : project;
+      })
+    );
+  };
+
+  const uploadThesisDraft = () => {
+    setStudentProfile((current) => ({
+      ...current,
+      thesisDrafts: [
+        ...current.thesisDrafts.map((draft) => ({ ...draft, isFinal: false })),
+        {
+          id: createId('thesis'),
+          title: `Thesis Draft ${current.thesisDrafts.length + 1}.pdf`,
+          fileUrl: '#',
+          uploadedAt: 'Today',
+          isFinal: true,
+        },
+      ],
+    }));
+  };
+
+  const setFinalThesisDraft = (draftId: string) => {
+    setStudentProfile((current) => ({
+      ...current,
+      thesisDrafts: current.thesisDrafts.map((draft) => ({
+        ...draft,
+        isFinal: draft.id === draftId,
+      })),
+    }));
+  };
+
   const applyToInternship = (internshipId: string) => {
     const targetInternship = internships.find(
       (internship) => internship.id === internshipId
@@ -472,6 +628,7 @@ function App() {
   };
 
   const saveStudentProfile = () => {
+    showSaveNotice('Student profile saved');
     addNotification({
       title: 'Student profile updated',
       message: 'The student profile details were refreshed for the prototype.',
@@ -480,6 +637,7 @@ function App() {
   };
 
   const saveEmployerProfile = () => {
+    showSaveNotice('Company profile saved');
     addNotification({
       title: 'Company profile updated',
       message: 'Company details were updated and are ready for the demo.',
@@ -488,6 +646,7 @@ function App() {
   };
 
   const saveInstructorProfile = () => {
+    showSaveNotice('Instructor profile saved');
     addNotification({
       title: 'Instructor profile updated',
       message: 'Instructor biography and interests were updated.',
@@ -726,6 +885,18 @@ function App() {
       return;
     }
 
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              isFlagged: true,
+              flagReason: 'Project flagged for a manual plagiarism check.',
+            }
+          : project
+      )
+    );
+
     setAppeals((current) => [
       {
         id: createId('appeal'),
@@ -785,6 +956,24 @@ function App() {
     );
   };
 
+  const createAdminAccount = () => {
+    const nextNumber = users.filter((user) => user.role === 'admin').length + 1;
+
+    setUsers((current) => [
+      ...current,
+      {
+        id: createId('user'),
+        name: `Admin ${nextNumber}`,
+        email: `admin${nextNumber}@guc.edu.eg`,
+        role: 'admin',
+        status: 'Active',
+        password: 'Admin123',
+        otp: '225790',
+        profilePicture: '',
+      },
+    ]);
+  };
+
   const toggleUserStatus = (userId: string) => {
     setUsers((current) =>
       current.map((user) =>
@@ -796,6 +985,54 @@ function App() {
           : user
       )
     );
+  };
+
+  const createCourse = () => {
+    const nextNumber = courses.length + 701;
+
+    setCourses((current) => [
+      ...current,
+      {
+        code: `CSEN ${nextNumber}`,
+        name: `New Course ${nextNumber}`,
+        instructor: instructorProfile.name,
+        linked: false,
+        linkRequestStatus: 'Pending',
+      },
+    ]);
+  };
+
+  const deleteCourse = (code: string) => {
+    setCourses((current) => current.filter((course) => course.code !== code));
+  };
+
+  const reviewCourseLinkRequest = (
+    code: string,
+    linkRequestStatus: 'Approved' | 'Rejected'
+  ) => {
+    setCourses((current) =>
+      current.map((course) =>
+        course.code === code
+          ? {
+              ...course,
+              linkRequestStatus,
+              linked: linkRequestStatus === 'Approved',
+            }
+          : course
+      )
+    );
+  };
+
+  const toggleProjectActivation = (projectId: string) => {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId ? { ...project, isFlagged: !project.isFlagged } : project
+      )
+    );
+  };
+
+  const downloadCompanyDocument = (companyName: string, document: string) => {
+    showSaveNotice(`${document} from ${companyName} is ready to download.`);
   };
 
   const openConversation = (conversationId: string) => {
@@ -822,6 +1059,10 @@ function App() {
       return;
     }
 
+    const targetConversation = activeConversations.find(
+      (conversation) => conversation.id === selectedConversationId
+    );
+
     setConversationsByRole((current) => ({
       ...current,
       [session.role]: current[session.role].map((conversation) =>
@@ -846,6 +1087,11 @@ function App() {
       ...current,
       [selectedConversationId]: '',
     }));
+    addNotification({
+      title: 'Private message sent',
+      message: `Message sent to ${targetConversation?.name ?? 'selected contact'}.`,
+      audience: [session.role],
+    });
   };
 
   const toggleNotificationsEnabled = () => {
@@ -885,6 +1131,18 @@ function App() {
       return null;
     }
 
+    if (currentPage === 'directory') {
+      return (
+        <DirectoryPage
+          role={session.role}
+          courses={courses}
+          instructorProfile={instructorProfile}
+          portfolios={portfolios}
+          projects={projects}
+        />
+      );
+    }
+
     switch (session.role) {
       case 'student':
         return (
@@ -904,6 +1162,15 @@ function App() {
             setFeaturedProjectById={setFeaturedProjectById}
             saveStudentProfile={saveStudentProfile}
             addTaskToProject={addTaskToProject}
+            createStudentProject={createStudentProject}
+            updateProjectTitle={updateProjectTitle}
+            deleteProject={deleteProject}
+            markProjectFinalDraft={markProjectFinalDraft}
+            updateInvitationStatus={updateInvitationStatus}
+            removeCollaborator={removeCollaborator}
+            moveTaskToTop={moveTaskToTop}
+            uploadThesisDraft={uploadThesisDraft}
+            setFinalThesisDraft={setFinalThesisDraft}
             taskDrafts={taskDrafts}
             setTaskDrafts={setTaskDrafts}
             applyToInternship={applyToInternship}
@@ -981,9 +1248,15 @@ function App() {
             appeals={appeals}
             resolveAppeal={resolveAppeal}
             users={users}
+            createAdminAccount={createAdminAccount}
             toggleUserStatus={toggleUserStatus}
             courses={courses}
+            createCourse={createCourse}
+            deleteCourse={deleteCourse}
+            reviewCourseLinkRequest={reviewCourseLinkRequest}
             projects={projects}
+            toggleProjectActivation={toggleProjectActivation}
+            downloadCompanyDocument={downloadCompanyDocument}
             featuredProject={featuredProject}
             instructorProfile={instructorProfile}
             setCurrentPage={navigateToPage}
@@ -1025,148 +1298,105 @@ function App() {
       style={{ fontSize: appFontSize }}
     >
       <div className={`workspace-shell role-${activeRole}`}>
-        <div
-          className={`workspace-overlay ${isSidebarOpen ? 'visible' : ''}`}
-          onClick={() => setIsSidebarOpen(false)}
-        />
-
-        <aside className={`workspace-sidebar ${isSidebarOpen ? 'open' : ''}`}>
-          <div className="sidebar-head">
-            <div className="brand-block">
-              <p>BridgeBoard</p>
-              <h1>Portfolio</h1>
-            </div>
-            <button
-              type="button"
-              className="ghost-button icon-button"
-              onClick={() => setIsSidebarOpen(false)}
-              aria-label="Close menu"
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="session-card">
-            <div className="session-avatar">{session.name.slice(0, 2).toUpperCase()}</div>
-            <div>
-              <strong>{session.name}</strong>
-              <span>{roleMeta[session.role].label}</span>
-            </div>
-          </div>
-
-          <nav className="sidebar-nav">
-            {activePages.map((page) => (
-              <button
-                key={page.id}
-                type="button"
-                className={`nav-link ${page.id === currentPage ? 'active' : ''}`}
-                onClick={() => navigateToPage(page.id)}
-              >
-                <div>
-                  <strong>{page.label}</strong>
-                  <span>{page.description}</span>
-                </div>
-                {page.id === 'notifications' && unreadCount > 0 ? (
-                  <Badge tone="accent">{unreadCount}</Badge>
-                ) : null}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
         <main className="workspace-main">
           <header className="workspace-topbar">
             <div className="topbar-left">
-              <button
-                type="button"
-                className="ghost-button icon-button"
-                onClick={() => {
-                  setIsSidebarOpen((current) => !current);
-                  setIsSettingsOpen(false);
-                }}
-                aria-label="Open menu"
-              >
-                ☰
-              </button>
+              <div className="brand-block">
+                <p>BridgeBoard</p>
+                <h1>Portfolio</h1>
+              </div>
               <div className="topbar-copy">
                 <p>{roleMeta[session.role].label}</p>
                 <strong>{activePageMeta?.label}</strong>
               </div>
             </div>
 
+            <nav className="top-nav" aria-label="Main pages">
+              {activePages
+                .filter((page) => page.id !== 'notifications')
+                .map((page) => (
+                  <button
+                    key={page.id}
+                    type="button"
+                    className={`top-nav-button ${
+                      page.id === currentPage ? 'active' : ''
+                    }`}
+                    onClick={() => navigateToPage(page.id)}
+                    title={page.description}
+                  >
+                    <span className="top-nav-icon">
+                      <Icon name={page.icon} />
+                    </span>
+                    <span>{page.label}</span>
+                  </button>
+                ))}
+            </nav>
+
             <div className="topbar-right">
-              <Badge tone="accent">{unreadCount} unread</Badge>
-              <div className="settings-wrap">
-                <button
-                  type="button"
-                  className={`ghost-button ${isSettingsOpen ? 'active' : ''}`}
-                  onClick={() => {
-                    setIsSettingsOpen((current) => !current);
-                    setIsSidebarOpen(false);
-                  }}
-                >
-                  Settings
-                </button>
-                {isSettingsOpen ? (
-                  <div className="settings-panel">
-                    <div className="settings-block">
-                      <span className="settings-label">Text size</span>
-                      <div className="settings-segment">
-                        {(['small', 'medium', 'large'] as FontScale[]).map((size) => (
-                          <button
-                            key={size}
-                            type="button"
-                            className={`settings-chip ${
-                              fontScale === size ? 'active' : ''
-                            }`}
-                            onClick={() => setFontScale(size)}
-                          >
-                            {size === 'small'
-                              ? 'Smaller'
-                              : size === 'large'
-                              ? 'Bigger'
-                              : 'Default'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="settings-row">
-                      <div>
-                        <strong>Theme</strong>
-                        <span>{darkMode ? 'Dark mode on' : 'Light mode on'}</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => setDarkMode((current) => !current)}
-                      >
-                        {darkMode ? 'Light mode' : 'Dark mode'}
-                      </button>
-                    </div>
-
-                    <div className="settings-row">
-                      <div>
-                        <strong>Account</strong>
-                        <span>{session.name}</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={handleLogout}
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </div>
+              <button
+                type="button"
+                className={`tool-button notification-button ${
+                  currentPage === 'notifications' ? 'active' : ''
+                }`}
+                onClick={() => navigateToPage('notifications')}
+                aria-label={`${unreadCount} unread notifications`}
+                title="Notifications"
+              >
+                <Icon name="bell" />
+                {unreadCount > 0 ? (
+                  <span className="notification-dot">{unreadCount}</span>
                 ) : null}
+              </button>
+
+              <button
+                type="button"
+                className="tool-button"
+                onClick={cycleFontScale}
+                aria-label="Change text size"
+                title="Text size"
+              >
+                <Icon name="text" />
+                <span className="tool-short">
+                  {fontScale === 'small' ? 'S' : fontScale === 'medium' ? 'M' : 'L'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="tool-button"
+                onClick={() => setDarkMode((current) => !current)}
+                aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={darkMode ? 'Light mode' : 'Dark mode'}
+              >
+                <Icon name={darkMode ? 'sun' : 'moon'} />
+              </button>
+
+              <div className="profile-pill">
+                <div className="session-avatar">{session.name.slice(0, 2).toUpperCase()}</div>
+                <div>
+                  <strong>{session.name}</strong>
+                  <span>{roleMeta[session.role].label}</span>
+                </div>
               </div>
 
-              <button type="button" className="primary-button" onClick={handleLogout}>
-                Logout
+              <button
+                type="button"
+                className="tool-button logout-button"
+                onClick={handleLogout}
+                aria-label="Log out"
+                title="Log out"
+              >
+                <Icon name="logout" />
               </button>
             </div>
           </header>
+
+          {saveNotice ? (
+            <div className="save-toast" role="status">
+              <Icon name="check" />
+              {saveNotice}
+            </div>
+          ) : null}
 
           {renderWorkspace()}
         </main>

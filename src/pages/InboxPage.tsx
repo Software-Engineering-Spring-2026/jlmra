@@ -29,9 +29,9 @@ export function InboxPage({
         <PageHeader
           eyebrow={roleMeta[role].label}
           title="Private messages"
-          description="Pick a contact to open a focused conversation page."
+          description="Send and receive private messages."
         />
-        <Panel title="Contacts" subtitle="Unread chats and recent private messages">
+        <Panel title="Contacts" subtitle="Private message threads">
           <div className="stack-list">
             {conversations.map((conversation) => {
               const latestMessage =
@@ -54,7 +54,7 @@ export function InboxPage({
                   </div>
                   <div className="conversation-side">
                     {conversation.unread > 0 ? (
-                      <Badge tone="accent">{conversation.unread}</Badge>
+                      <Badge tone="warn">{conversation.unread}</Badge>
                     ) : (
                       <Badge tone="neutral">Open</Badge>
                     )}

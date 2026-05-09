@@ -22,7 +22,7 @@ export function NotificationsPage({
       <PageHeader
         eyebrow={roleMeta[role].label}
         title="Notifications"
-        description="The notifications page is now separated from everything else so unread items are much easier to manage."
+        description="Unread alerts are red."
         action={
           <button type="button" className="ghost-button" onClick={onToggleEnabled}>
             Turn {enabled ? 'off' : 'on'}
@@ -36,24 +36,21 @@ export function NotificationsPage({
       ) : null}
       <Panel
         title={`${notifications.length} alerts`}
-        subtitle="Unread items are highlighted and can be toggled individually."
+        subtitle="Mark each alert as read or unread."
       >
         <div className="stack-list">
           {notifications.map((notification) => (
-            <article key={notification.id} className="list-card">
+            <article
+              key={notification.id}
+              className={`list-card ${notification.read ? '' : 'unread-card'}`}
+            >
               <div className="list-card-head">
                 <div>
                   <strong>{notification.title}</strong>
                   <span>{notification.time}</span>
                 </div>
                 <Badge
-                  tone={
-                    notification.read
-                      ? 'neutral'
-                      : notification.tone === 'warn'
-                      ? 'warn'
-                      : 'accent'
-                  }
+                  tone={notification.read ? 'neutral' : 'warn'}
                 >
                   {notification.read ? 'Read' : 'Unread'}
                 </Badge>
