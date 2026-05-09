@@ -20,6 +20,13 @@ type LoginScreenProps = {
   loginError: string;
   onLoginCredentials: () => boolean;
   onVerifyOtp: () => void;
+  onCreateAccount: (account: {
+    role: SignupRole;
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+  }) => { ok: boolean; message: string };
 };
 
 type SignupRole = Exclude<Role, 'admin'>;
@@ -44,12 +51,23 @@ export function LoginScreen({
   loginError,
   onLoginCredentials,
   onVerifyOtp,
+  onCreateAccount,
 }: LoginScreenProps) {
   const [authMode, setAuthMode] = useState<
     'signin' | 'otp' | 'signup' | 'forgot' | 'forgot-otp'
   >('signin');
   const [signupRole, setSignupRole] = useState<SignupRole>('student');
+  const [signupForm, setSignupForm] = useState({
+    companyName: '',
+    companyEmail: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [authNotice, setAuthNotice] = useState('');
+  const [signupError, setSignupError] = useState('');
 
   const detectedAccount = accounts.find(
     (account) => account.email.toLowerCase() === loginForm.email.trim().toLowerCase()
@@ -60,6 +78,66 @@ export function LoginScreen({
   ) => {
     setAuthMode(mode);
     setAuthNotice('');
+    setSignupError('');
+  };
+
+  const updateSignupForm =
+    (field: keyof typeof signupForm) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSignupForm((current) => ({
+        ...current,
+        [field]: event.target.value,
+      }));
+    };
+
+  const handleSignupSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const email =
+      signupRole === 'employer' && signupForm.companyEmail.trim()
+        ? signupForm.companyEmail
+        : signupForm.email;
+
+    if (
+      !signupForm.firstName.trim() ||
+      !signupForm.lastName.trim() ||
+      !email.trim() ||
+      !signupForm.password.trim()
+    ) {
+      setSignupError('Please fill in the required account details.');
+      return;
+    }
+
+    if (signupForm.password !== signupForm.confirmPassword) {
+      setSignupError('Passwords do not match.');
+      return;
+    }
+
+    const result = onCreateAccount({
+      role: signupRole,
+      firstName: signupForm.firstName,
+      lastName: signupForm.lastName,
+      email,
+      password: signupForm.password,
+    });
+
+    if (!result.ok) {
+      setSignupError(result.message);
+      return;
+    }
+
+    setSignupForm({
+      companyName: '',
+      companyEmail: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    });
+    setSignupError('');
+    setAuthNotice(result.message);
+    setAuthMode('signin');
   };
 
   return (
@@ -242,14 +320,17 @@ export function LoginScreen({
         ) : null}
 
         {authMode === 'signup' ? (
-          <div className="auth-form">
+          <form className="auth-form" onSubmit={handleSignupSubmit}>
             <div className="role-picker" aria-label="Choose registration role">
               {(['student', 'employer', 'instructor'] as SignupRole[]).map((role) => (
                 <button
                   key={role}
                   type="button"
                   className={`role-choice ${signupRole === role ? 'active' : ''}`}
-                  onClick={() => setSignupRole(role)}
+                  onClick={() => {
+                    setSignupRole(role);
+                    setSignupError('');
+                  }}
                 >
                   <Icon
                     name={
@@ -270,48 +351,76 @@ export function LoginScreen({
                 <>
                   <label>
                     Company name
-                    <input placeholder="Enter company name" />
+                    <input
+                      value={signupForm.companyName}
+                      placeholder="Enter company name"
+                      onChange={updateSignupForm('companyName')}
+                    />
                   </label>
                   <label>
                     Company email
-                    <input type="email" placeholder="Enter company email" />
+                    <input
+                      type="email"
+                      value={signupForm.companyEmail}
+                      placeholder="Enter company email"
+                      onChange={updateSignupForm('companyEmail')}
+                    />
                   </label>
                 </>
               ) : null}
 
               <label>
                 First name
-                <input placeholder="Enter first name" />
+                <input
+                  value={signupForm.firstName}
+                  placeholder="Enter first name"
+                  onChange={updateSignupForm('firstName')}
+                />
               </label>
               <label>
                 Last name
-                <input placeholder="Enter last name" />
+                <input
+                  value={signupForm.lastName}
+                  placeholder="Enter last name"
+                  onChange={updateSignupForm('lastName')}
+                />
               </label>
               <label className="full-span">
                 Email
-                <input type="email" placeholder="Enter email" />
+                <input
+                  type="email"
+                  value={signupForm.email}
+                  placeholder="Enter email"
+                  onChange={updateSignupForm('email')}
+                />
               </label>
               <label>
                 Password
-                <input type="password" placeholder="Enter password" />
+                <input
+                  type="password"
+                  value={signupForm.password}
+                  placeholder="Enter password"
+                  onChange={updateSignupForm('password')}
+                />
               </label>
               <label>
                 Confirm password
-                <input type="password" placeholder="Confirm password" />
+                <input
+                  type="password"
+                  value={signupForm.confirmPassword}
+                  placeholder="Confirm password"
+                  onChange={updateSignupForm('confirmPassword')}
+                />
               </label>
             </div>
 
-            <button
-              type="button"
-              className="primary-button wide-button"
-              onClick={() =>
-                setAuthNotice(`${signupRoleLabels[signupRole]} registration saved.`)
-              }
-            >
+            {signupError ? <div className="error-banner">{signupError}</div> : null}
+
+            <button type="submit" className="primary-button wide-button">
               <Icon name="signup" />
               Create account
             </button>
-          </div>
+          </form>
         ) : null}
 
         {authMode === 'forgot' ? (
