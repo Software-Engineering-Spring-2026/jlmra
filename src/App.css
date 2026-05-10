@@ -49,11 +49,11 @@
 }
 
 .app-root {
-  background: linear-gradient(135deg, #f5fbf8 0%, #edf6f4 34%, #fff2ec 68%, #eef4fb 100%);
+ background-color: #cce1f3;
 }
 
 .theme-dark.app-root {
-  background: linear-gradient(135deg, #0f1720 0%, #13251f 38%, #271d1b 70%, #101d2a 100%);
+  background-color: #cce1f3;
 }
 
 .role-employer {
@@ -102,7 +102,7 @@
   min-height: 480px;
   padding: 28px;
   border-radius: 8px;
-  background: linear-gradient(145deg, rgba(8, 127, 140, 0.12), rgba(242, 109, 91, 0.14));
+  background-color: #cce1f3;
   border: 1px solid var(--line-soft);
 }
 
@@ -421,7 +421,7 @@ select,
 .control-row::before,
 .list-card::before,
 .project-card::before {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 54%);
+ background-color: #cce1f3;
 }
 
 @media (max-width: 1200px) {
@@ -471,11 +471,7 @@ select,
 
 .app-root {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(108, 167, 255, 0.2), transparent 30%),
-    radial-gradient(circle at top right, rgba(153, 127, 255, 0.16), transparent 26%),
-    radial-gradient(circle at bottom left, rgba(89, 217, 211, 0.18), transparent 30%),
-    linear-gradient(180deg, #f7fbff 0%, #eef5ff 48%, #eef9f6 100%);
+ background-color: #cce1f3;
 }
 
 .theme-dark {
@@ -492,11 +488,7 @@ select,
 }
 
 .theme-dark.app-root {
-  background:
-    radial-gradient(circle at top left, rgba(108, 167, 255, 0.18), transparent 32%),
-    radial-gradient(circle at top right, rgba(153, 127, 255, 0.16), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(89, 217, 211, 0.16), transparent 32%),
-    linear-gradient(180deg, #0d1326 0%, #141d35 55%, #112331 100%);
+ background-color: #cce1f3;
 }
 
 .role-employer {
@@ -652,7 +644,7 @@ select,
 .nav-link.active,
 .list-button.active {
   border-color: rgba(0, 0, 0, 0.08);
-  background: linear-gradient(135deg, var(--accent-soft), rgba(255, 255, 255, 0.9));
+  background-color: #cce1f3;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
@@ -745,7 +737,7 @@ button {
 .primary-button {
   border: none;
   padding: 0.88rem 1.1rem;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  background-color: #cce1f3;
   color: #fff9f2;
   box-shadow: 0 16px 30px rgba(89, 129, 224, 0.22);
 }
@@ -753,7 +745,7 @@ button {
 .ghost-button {
   border: 1px solid var(--line-strong);
   padding: 0.82rem 1rem;
-  background: linear-gradient(135deg, var(--surface-1), rgba(255, 255, 255, 0.35));
+  background-color: #cce1f3;
   color: var(--ink-900);
 }
 
@@ -846,8 +838,7 @@ button:active {
   gap: 14px;
   padding: 16px;
   border-radius: var(--radius-lg);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0.3)),
+  background-color: #cce1f3,
     var(--surface-1);
   border: 1px solid var(--line-soft);
 }
@@ -1127,9 +1118,7 @@ button:active {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 44%),
-    radial-gradient(circle at top right, var(--accent-soft), transparent 32%);
+  background: transparent;
   pointer-events: none;
 }
 
@@ -1192,9 +1181,7 @@ button:active {
   justify-content: space-between;
   padding: 16px;
   border-radius: var(--radius-md);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.28)),
-    var(--surface-1);
+  background:rgba(255, 255, 255, 0.5);
   border: 1px solid var(--line-soft);
 }
 
@@ -1303,7 +1290,7 @@ button:active {
 .progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  background-color: #cce1f3;
 }
 
 .progress-fill-81 {
@@ -1562,11 +1549,11 @@ button:active {
 }
 
 .app-root {
-  background: linear-gradient(135deg, #f5fbf8 0%, #edf6f4 34%, #fff2ec 68%, #eef4fb 100%);
+  background: #ffffff;
 }
 
 .theme-dark.app-root {
-  background: linear-gradient(135deg, #0f1720 0%, #13251f 38%, #271d1b 70%, #101d2a 100%);
+  background: #101d2a;
 }
 
 .login-card {
@@ -1701,9 +1688,7 @@ select,
 .page-header {
   padding: 26px;
   border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(8, 127, 140, 0.95), rgba(47, 111, 173, 0.86)),
-    var(--accent);
+  background:rgba(47, 111, 173, 0.86);
   color: #fff;
   box-shadow: 0 16px 32px rgba(8, 127, 140, 0.18);
 }
@@ -1732,28 +1717,20 @@ select,
 }
 
 .stat-card:nth-child(1)::before {
-  background:
-    linear-gradient(135deg, rgba(47, 111, 173, 0.16), transparent 44%),
-    radial-gradient(circle at top right, rgba(47, 111, 173, 0.2), transparent 34%);
+  background: transparent ;
 }
 
 .stat-card:nth-child(2)::before {
-  background:
-    linear-gradient(135deg, rgba(8, 127, 140, 0.14), transparent 44%),
-    radial-gradient(circle at top right, rgba(8, 127, 140, 0.18), transparent 34%);
+  background: transparent ;
 }
 
 .stat-card:nth-child(3)::before {
-  background:
-    linear-gradient(135deg, rgba(242, 109, 91, 0.14), transparent 44%),
-    radial-gradient(circle at top right, rgba(242, 109, 91, 0.18), transparent 34%);
+  background: transparent ;
 }
 
 .unread-card {
   border-color: rgba(180, 81, 63, 0.34);
-  background:
-    linear-gradient(135deg, rgba(180, 81, 63, 0.11), rgba(255, 255, 255, 0.74)),
-    var(--surface-1);
+  background: rgba(255, 255, 255, 0.74);
 }
 
 /* Clean role-aware visual pass. This block intentionally comes last. */
@@ -1763,7 +1740,7 @@ select,
   --accent-strong: #e66d4f;
   --banner-start: #0a7f8f;
   --banner-end: #2b6fa8;
-  background: linear-gradient(135deg, #eefaf8 0%, #edf5fb 42%, #fff3ed 100%);
+  background: #fff3ed;
 }
 
 .app-root.role-employer {
@@ -1772,7 +1749,7 @@ select,
   --accent-strong: #c98622;
   --banner-start: #16734f;
   --banner-end: #a06b1f;
-  background: linear-gradient(135deg, #eff9f3 0%, #f7f1df 46%, #eef7f4 100%);
+  background: #fff3ed;
 }
 
 .app-root.role-instructor {
@@ -1781,7 +1758,7 @@ select,
   --accent-strong: #d16f56;
   --banner-start: #2f679f;
   --banner-end: #815fa3;
-  background: linear-gradient(135deg, #edf5fc 0%, #f3f0fb 48%, #fff2ee 100%);
+  background: #fff3ed;
 }
 
 .app-root.role-admin {
@@ -1790,40 +1767,38 @@ select,
   --accent-strong: #c45744;
   --banner-start: #53667a;
   --banner-end: #8a594f;
-  background: linear-gradient(135deg, #f0f4f7 0%, #f6f1ee 46%, #eef4f2 100%);
+  background: #fff3ed;
 }
 
 .app-root.theme-dark.role-student {
   --banner-start: #084451;
   --banner-end: #193a63;
-  background: linear-gradient(135deg, #071a20 0%, #0d2430 45%, #251916 100%);
+  background: #18202a;
 }
 
 .app-root.theme-dark.role-employer {
   --banner-start: #123f31;
   --banner-end: #574019;
-  background: linear-gradient(135deg, #081a14 0%, #13271f 48%, #2a2112 100%);
+  background:#18202a;
 }
 
 .app-root.theme-dark.role-instructor {
   --banner-start: #18385a;
   --banner-end: #46325b;
-  background: linear-gradient(135deg, #081420 0%, #101f33 48%, #241b2d 100%);
+  background: #18202a;
 }
 
 .app-root.theme-dark.role-admin {
   --banner-start: #2b3744;
   --banner-end: #523932;
-  background: linear-gradient(135deg, #0b1118 0%, #18202a 48%, #241918 100%);
+  background: #18202a;
 }
 
 .page-header {
   min-height: 0;
   padding: 18px 20px;
   align-items: center;
-  background:
-    linear-gradient(135deg, var(--banner-start, var(--accent)), var(--banner-end, var(--accent-strong))),
-    var(--accent);
+  
   box-shadow: 0 14px 28px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
