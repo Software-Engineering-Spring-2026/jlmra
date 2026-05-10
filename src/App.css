@@ -316,6 +316,7 @@
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   background: var(--surface-1);
+  pointer-events: auto;
 }
 
 .profile-pill .session-avatar {

@@ -1121,18 +1121,69 @@ function App() {
       }
     : null;
 
-  const sharedNotificationProps = session
+    const sharedNotificationProps = session
     ? {
         notifications: activeNotifications,
         notificationsEnabled: notificationPreferences[session.role],
         onToggleNotificationsEnabled: toggleNotificationsEnabled,
         onToggleNotificationRead: toggleNotificationRead,
       }
-    : null;
+    : {
+        notifications: [],
+        notificationsEnabled: false,
+        onToggleNotificationsEnabled: () => {},
+        onToggleNotificationRead: () => {},
+      };
 
   const renderWorkspace = () => {
     if (!session || !sharedMessageProps || !sharedNotificationProps) {
       return null;
+    }
+    const user = session;
+    if (currentPage === 'profile') {
+      return (
+        <div style={{ padding: '30px', maxWidth: '600px' }}>
+        <h1 style={{ marginBottom: '20px' }}>My Profile</h1>
+      
+        <div
+          style={{
+            background: '#ffffff',
+            padding: '20px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '20px'
+          }}
+        >
+          {/* Avatar */}
+          <div
+            style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: '#6c63ff',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontSize: '20px'
+            }}
+          >
+            {user.name.slice(0, 2).toUpperCase()}
+          </div>
+      
+          {/* Info */}
+          <div>
+            <h2 style={{ margin: 0 }}>{user.name}</h2>
+            <p style={{ margin: '5px 0', color: '#666' }}>
+              Role: {user.role}
+            </p>
+          </div>
+        </div>
+      </div>
+      );
     }
 
     if (currentPage === 'directory') {
@@ -1180,12 +1231,12 @@ function App() {
             applyToInternship={applyToInternship}
             toggleInternshipFavorite={toggleInternshipFavorite}
             {...sharedMessageProps}
-            notifications={sharedNotificationProps.notifications}
-            notificationsEnabled={sharedNotificationProps.notificationsEnabled}
+            notifications={sharedNotificationProps!.notifications}
+            notificationsEnabled={sharedNotificationProps!.notificationsEnabled}
             onToggleNotificationsEnabled={
-              sharedNotificationProps.onToggleNotificationsEnabled
+              sharedNotificationProps!.onToggleNotificationsEnabled
             }
-            onToggleNotificationRead={sharedNotificationProps.onToggleNotificationRead}
+            onToggleNotificationRead={sharedNotificationProps!.onToggleNotificationRead}
           />
         );
       case 'employer':
@@ -1209,12 +1260,12 @@ function App() {
             setCurrentPage={navigateToPage}
             updateApplicantStatus={updateApplicantStatus}
             {...sharedMessageProps}
-            notifications={sharedNotificationProps.notifications}
-            notificationsEnabled={sharedNotificationProps.notificationsEnabled}
+            notifications={sharedNotificationProps!.notifications}
+            notificationsEnabled={sharedNotificationProps!.notificationsEnabled}
             onToggleNotificationsEnabled={
-              sharedNotificationProps.onToggleNotificationsEnabled
+              sharedNotificationProps!.onToggleNotificationsEnabled
             }
-            onToggleNotificationRead={sharedNotificationProps.onToggleNotificationRead}
+            onToggleNotificationRead={sharedNotificationProps!.onToggleNotificationRead}
           />
         );
       case 'instructor':
@@ -1235,12 +1286,12 @@ function App() {
             pendingInvitations={pendingInvitations}
             setCurrentPage={navigateToPage}
             {...sharedMessageProps}
-            notifications={sharedNotificationProps.notifications}
-            notificationsEnabled={sharedNotificationProps.notificationsEnabled}
+            notifications={sharedNotificationProps!.notifications}
+            notificationsEnabled={sharedNotificationProps!.notificationsEnabled}
             onToggleNotificationsEnabled={
-              sharedNotificationProps.onToggleNotificationsEnabled
+              sharedNotificationProps!.onToggleNotificationsEnabled
             }
-            onToggleNotificationRead={sharedNotificationProps.onToggleNotificationRead}
+            onToggleNotificationRead={sharedNotificationProps!.onToggleNotificationRead}
           />
         );
       case 'admin':
@@ -1266,19 +1317,19 @@ function App() {
             instructorProfile={instructorProfile}
             setCurrentPage={navigateToPage}
             {...sharedMessageProps}
-            notifications={sharedNotificationProps.notifications}
-            notificationsEnabled={sharedNotificationProps.notificationsEnabled}
+            notifications={sharedNotificationProps!.notifications}
+            notificationsEnabled={sharedNotificationProps!.notificationsEnabled}
             onToggleNotificationsEnabled={
-              sharedNotificationProps.onToggleNotificationsEnabled
+              sharedNotificationProps!.onToggleNotificationsEnabled
             }
-            onToggleNotificationRead={sharedNotificationProps.onToggleNotificationRead}
+            onToggleNotificationRead={sharedNotificationProps!.onToggleNotificationRead}
           />
         );
       default:
         return null;
     }
   };
-
+ 
   if (!session) {
     return (
       <div
@@ -1377,12 +1428,22 @@ function App() {
               </button>
 
               <div className="profile-pill">
-                <div className="session-avatar">{session.name.slice(0, 2).toUpperCase()}</div>
-                <div>
-                  <strong>{session.name}</strong>
-                  <span>{roleMeta[session.role].label}</span>
-                </div>
-              </div>
+  <div className="session-avatar">
+    {session.name.slice(0, 2).toUpperCase()}
+  </div>
+
+  <span
+    onClick={() => navigateToPage('profile')}
+    style={{
+      cursor: "pointer",
+      display: "inline-block"
+    }}
+  >
+    <strong>{session.name}</strong>
+    <br />
+    <span>{roleMeta[session.role].label}</span>
+  </span>
+</div>
 
               <button
                 type="button"

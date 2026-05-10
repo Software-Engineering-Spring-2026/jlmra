@@ -92,6 +92,7 @@ export const demoAccounts: DemoAccount[] = [
 export const pagesByRole: Record<Role, PageMeta[]> = {
   student: [
     { id: 'dashboard', label: 'Dashboard', description: 'Home', icon: 'dashboard' },
+    {id: 'profile', label: 'Profile', description:'Your profile', icon:'user'},
     { id: 'portfolio', label: 'Portfolio', description: 'Your profile', icon: 'portfolio' },
     { id: 'projects', label: 'Projects', description: 'Manage projects', icon: 'folder' },
     { id: 'internships', label: 'Internships', description: 'Find opportunities', icon: 'briefcase' },
@@ -125,5 +126,6 @@ export const pagesByRole: Record<Role, PageMeta[]> = {
     { id: 'directory', label: 'Records', description: 'Search', icon: 'search' },
     { id: 'inbox', label: 'Messages', description: 'Chat', icon: 'mail' },
     { id: 'notifications', label: 'Notifications', description: 'Alerts', icon: 'bell' },
+    { id: 'profile', label: 'Profile', description: 'Your profile', icon: 'user' },
   ],
 };
