@@ -19,6 +19,7 @@ import {
   type NotificationItem,
   type PortfolioCard,
   type Project,
+  type ProjectTask,
   type Role,
   type StudentProfile,
   type UserAccount,
@@ -476,6 +477,35 @@ function App() {
     );
   };
 
+  const updateProjectTask = (
+    projectId: string,
+    taskId: string,
+    changes: Partial<ProjectTask>
+  ) => {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              tasks: project.tasks.map((task) =>
+                task.id === taskId ? { ...task, ...changes } : task
+              ),
+            }
+          : project
+      )
+    );
+  };
+
+  const deleteProjectTask = (projectId: string, taskId: string) => {
+    setProjects((current) =>
+      current.map((project) =>
+        project.id === projectId
+          ? { ...project, tasks: project.tasks.filter((task) => task.id !== taskId) }
+          : project
+      )
+    );
+  };
+
   const deleteProject = (projectId: string) => {
     setProjects((current) => current.filter((project) => project.id !== projectId));
     addNotification({
@@ -579,6 +609,31 @@ function App() {
     }));
   };
 
+  const sendProjectAppeal = (projectId: string, message: string) => {
+    const targetProject = projects.find((project) => project.id === projectId);
+    if (!targetProject || !message.trim()) {
+      return;
+    }
+
+    setAppeals((current) => [
+      {
+        id: createId('appeal'),
+        projectTitle: targetProject.title,
+        raisedBy: studentProfile.name,
+        reason: targetProject.flagReason ?? 'Project was flagged by a course instructor.',
+        studentMessage: message.trim(),
+        status: 'Pending Review',
+      },
+      ...current,
+    ]);
+
+    addNotification({
+      title: 'Appeal sent',
+      message: `${targetProject.title} appeal was sent to the administrator.`,
+      audience: ['student', 'admin'],
+    });
+  };
+
   const applyToInternship = (internshipId: string) => {
     const targetInternship = internships.find(
       (internship) => internship.id === internshipId
@@ -636,6 +691,14 @@ function App() {
     });
   };
 
+  const uploadStudentProfilePicture = () => {
+    setStudentProfile((current) => ({
+      ...current,
+      profilePicture: 'Uploaded student profile picture',
+    }));
+    showSaveNotice('Profile picture uploaded');
+  };
+
   const saveEmployerProfile = () => {
     showSaveNotice('Company profile saved');
     addNotification({
@@ -645,6 +708,14 @@ function App() {
     });
   };
 
+  const uploadEmployerLogo = () => {
+    setEmployerProfile((current) => ({
+      ...current,
+      logo: 'Uploaded company logo',
+    }));
+    showSaveNotice('Company logo uploaded');
+  };
+
   const saveInstructorProfile = () => {
     showSaveNotice('Instructor profile saved');
     addNotification({
@@ -652,6 +723,14 @@ function App() {
       message: 'Instructor biography and interests were updated.',
       audience: ['instructor'],
     });
+  };
+
+  const uploadInstructorProfilePicture = () => {
+    setInstructorProfile((current) => ({
+      ...current,
+      profilePicture: 'Uploaded instructor profile picture',
+    }));
+    showSaveNotice('Instructor profile picture uploaded');
   };
 
   const uploadEmployerDocument = () => {
@@ -912,7 +991,7 @@ function App() {
 
     addNotification({
       title: 'Project flagged',
-      message: `${targetProject.title} was flagged and is now visible in the appeals queue.`,
+      message: `${targetProject.title} was flagged: Project flagged for a manual plagiarism check.`,
       audience: ['student', 'instructor', 'admin'],
       tone: 'warn',
     });
@@ -1216,9 +1295,12 @@ function App() {
             toggleProjectVisibility={toggleProjectVisibility}
             setFeaturedProjectById={setFeaturedProjectById}
             saveStudentProfile={saveStudentProfile}
+            uploadStudentProfilePicture={uploadStudentProfilePicture}
             addTaskToProject={addTaskToProject}
             createStudentProject={createStudentProject}
             updateProjectTitle={updateProjectTitle}
+            updateProjectTask={updateProjectTask}
+            deleteProjectTask={deleteProjectTask}
             deleteProject={deleteProject}
             markProjectFinalDraft={markProjectFinalDraft}
             updateInvitationStatus={updateInvitationStatus}
@@ -1226,6 +1308,7 @@ function App() {
             moveTaskToTop={moveTaskToTop}
             uploadThesisDraft={uploadThesisDraft}
             setFinalThesisDraft={setFinalThesisDraft}
+            sendProjectAppeal={sendProjectAppeal}
             taskDrafts={taskDrafts}
             setTaskDrafts={setTaskDrafts}
             applyToInternship={applyToInternship}
@@ -1246,6 +1329,7 @@ function App() {
             employerProfile={employerProfile}
             setEmployerProfile={setEmployerProfile}
             saveEmployerProfile={saveEmployerProfile}
+            uploadEmployerLogo={uploadEmployerLogo}
             uploadEmployerDocument={uploadEmployerDocument}
             employerInternships={employerInternships}
             internshipDraft={internshipDraft}
@@ -1275,6 +1359,7 @@ function App() {
             instructorProfile={instructorProfile}
             setInstructorProfile={setInstructorProfile}
             saveInstructorProfile={saveInstructorProfile}
+            uploadInstructorProfilePicture={uploadInstructorProfilePicture}
             courses={courses}
             toggleCourseLink={toggleCourseLink}
             projects={projects}

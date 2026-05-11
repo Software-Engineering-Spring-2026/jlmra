@@ -23,6 +23,7 @@ type EmployerWorkspaceProps = {
   employerProfile: EmployerProfile;
   setEmployerProfile: React.Dispatch<React.SetStateAction<EmployerProfile>>;
   saveEmployerProfile: () => void;
+  uploadEmployerLogo: () => void;
   uploadEmployerDocument: () => void;
   employerInternships: Internship[];
   internshipDraft: InternshipDraft;
@@ -61,6 +62,7 @@ export function EmployerWorkspace({
   employerProfile,
   setEmployerProfile,
   saveEmployerProfile,
+  uploadEmployerLogo,
   uploadEmployerDocument,
   employerInternships,
   internshipDraft,
@@ -168,7 +170,15 @@ export function EmployerWorkspace({
             }
           />
           <div className="content-grid">
-            <Panel title="Company details" subtitle="Editable employer information">
+            <Panel
+              title="Company details"
+              subtitle="Editable employer information and company logo"
+              action={
+                <button type="button" className="ghost-button" onClick={uploadEmployerLogo}>
+                  Upload Logo
+                </button>
+              }
+            >
               <div className="form-grid">
                 <label>
                   Company email
