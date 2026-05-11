@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { type WorkspacePage } from '../appConfig';
 import {
   type Conversation,
@@ -27,9 +27,16 @@ type StudentWorkspaceProps = {
   toggleProjectVisibility: (projectId: string) => void;
   setFeaturedProjectById: (projectId: string) => void;
   saveStudentProfile: () => void;
+  uploadStudentProfilePicture: () => void;
   addTaskToProject: (projectId: string) => void;
   createStudentProject: () => void;
   updateProjectTitle: (projectId: string, title: string) => void;
+  updateProjectTask: (
+    projectId: string,
+    taskId: string,
+    changes: Partial<Project['tasks'][number]>
+  ) => void;
+  deleteProjectTask: (projectId: string, taskId: string) => void;
   deleteProject: (projectId: string) => void;
   markProjectFinalDraft: (projectId: string) => void;
   updateInvitationStatus: (
@@ -41,6 +48,7 @@ type StudentWorkspaceProps = {
   moveTaskToTop: (projectId: string, taskId: string) => void;
   uploadThesisDraft: () => void;
   setFinalThesisDraft: (draftId: string) => void;
+  sendProjectAppeal: (projectId: string, message: string) => void;
   taskDrafts: Record<string, string>;
   setTaskDrafts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   applyToInternship: (internshipId: string) => void;
@@ -73,9 +81,12 @@ export function StudentWorkspace({
   toggleProjectVisibility,
   setFeaturedProjectById,
   saveStudentProfile,
+  uploadStudentProfilePicture,
   addTaskToProject,
   createStudentProject,
   updateProjectTitle,
+  updateProjectTask,
+  deleteProjectTask,
   deleteProject,
   markProjectFinalDraft,
   updateInvitationStatus,
@@ -83,6 +94,7 @@ export function StudentWorkspace({
   moveTaskToTop,
   uploadThesisDraft,
   setFinalThesisDraft,
+  sendProjectAppeal,
   taskDrafts,
   setTaskDrafts,
   applyToInternship,
@@ -99,6 +111,31 @@ export function StudentWorkspace({
   onToggleNotificationsEnabled,
   onToggleNotificationRead,
 }: StudentWorkspaceProps) {
+  const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id ?? '');
+  const [appealDrafts, setAppealDrafts] = useState<Record<string, string>>({});
+  const [durationFilter, setDurationFilter] = useState('All');
+  const [internshipSort, setInternshipSort] = useState<'posted' | 'company'>('posted');
+  const selectedProject =
+    projects.find((project) => project.id === selectedProjectId) ?? projects[0];
+  const durationOptions = [
+    'All',
+    ...Array.from(new Set(internships.map((internship) => internship.duration))),
+  ];
+  const postedTime = (value: string) =>
+    value === 'Today' ? Date.now() : Date.parse(value) || 0;
+  const displayedInternships = internships
+    .filter(
+      (internship) => durationFilter === 'All' || internship.duration === durationFilter
+    )
+    .sort((first, second) =>
+      internshipSort === 'posted'
+        ? postedTime(second.postedOn) - postedTime(first.postedOn)
+        : first.companyName.localeCompare(second.companyName)
+    );
+  const completedInternships = internships.filter(
+    (internship) => internship.applicationStatus === 'Completed'
+  );
+
   switch (currentPage) {
     case 'dashboard':
       return (
@@ -189,7 +226,19 @@ export function StudentWorkspace({
             }
           />
           <div className="content-grid">
-            <Panel title="Basic information" subtitle="Profile details shown on the student portfolio">
+            <Panel
+              title="Basic information"
+              subtitle="Major, skills, LinkedIn, and profile picture"
+              action={
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={uploadStudentProfilePicture}
+                >
+                  Upload Picture
+                </button>
+              }
+            >
               <div className="form-grid">
                 <label>
                   Full name
@@ -240,21 +289,24 @@ export function StudentWorkspace({
                   />
                 </label>
                 <label className="full-span">
-                  Bio
-                  <textarea
-                    rows={4}
-                    value={studentProfile.bio}
+                  Skills
+                  <input
+                    value={studentProfile.skills.join(', ')}
                     onChange={(event) =>
                       setStudentProfile((current) => ({
                         ...current,
-                        bio: event.target.value,
+                        skills: event.target.value
+                          .split(',')
+                          .map((skill) => skill.trim())
+                          .filter(Boolean),
                       }))
                     }
+                    placeholder="React, TypeScript, UI Design"
                   />
                 </label>
               </div>
             </Panel>
-            <Panel title="Portfolio controls" subtitle="Visibility and featured project">
+            <Panel title="Profile visibility" subtitle="This controls the whole portfolio">
               <div className="control-stack">
                 <div className="control-row">
                   <div>
@@ -278,24 +330,48 @@ export function StudentWorkspace({
                       : 'Public'}
                   </button>
                 </div>
-                <div className="simple-list">
-                  {projects.map((project) => (
-                    <button
-                      key={project.id}
-                      type="button"
-                      className={`list-button ${project.featured ? 'active' : ''}`}
-                      onClick={() => setFeaturedProjectById(project.id)}
-                    >
-                      <div>
-                        <strong>{project.title}</strong>
-                        <span>
-                          {project.visibility} · {project.status}
-                        </span>
-                      </div>
-                      {project.featured ? <Badge tone="accent">Featured</Badge> : null}
-                    </button>
-                  ))}
-                </div>
+              </div>
+            </Panel>
+            <Panel title="Visible projects" subtitle="Choose which projects appear on the portfolio">
+              <div className="simple-list">
+                {projects.map((project) => (
+                  <div key={project.id} className="simple-list-item">
+                    <strong>{project.title}</strong>
+                    <span>
+                      {project.visibility} on portfolio
+                      {project.featured ? ' - Featured' : ''}
+                    </span>
+                    <div className="button-row">
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => toggleProjectVisibility(project.id)}
+                      >
+                        {project.visibility === 'Public' ? 'Hide' : 'Show'}
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        disabled={project.featured}
+                        onClick={() => setFeaturedProjectById(project.id)}
+                      >
+                        {project.featured ? 'Featured' : 'Make Featured'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+            <Panel title="Completed internships" subtitle="Automatically added to the portfolio">
+              <div className="simple-list">
+                {completedInternships.map((internship) => (
+                  <div key={internship.id} className="simple-list-item">
+                    <strong>{internship.title}</strong>
+                    <span>
+                      {internship.companyName} - {internship.duration}
+                    </span>
+                  </div>
+                ))}
               </div>
             </Panel>
           </div>
@@ -307,235 +383,320 @@ export function StudentWorkspace({
           <PageHeader
             eyebrow="Student projects"
             title="Project library"
-            description="Projects, tasks, invitations, and feedback."
+            description="Select one project, then manage its details."
             action={
               <button type="button" className="primary-button" onClick={createStudentProject}>
                 Create Project
               </button>
             }
           />
-          <Panel
-            title="Bachelor thesis drafts"
-            subtitle="Only the final draft is public"
-            action={
-              <button type="button" className="ghost-button" onClick={uploadThesisDraft}>
-                Upload Draft
-              </button>
-            }
-          >
-            <div className="simple-list">
-              {studentProfile.thesisDrafts.map((draft) => (
-                <div key={draft.id} className="simple-list-item">
-                  <strong>{draft.title}</strong>
-                  <span>
-                    {draft.uploadedAt} · {draft.isFinal ? 'Final public draft' : 'Private draft'}
-                  </span>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => setFinalThesisDraft(draft.id)}
-                  >
-                    Set Final Draft
-                  </button>
-                </div>
-              ))}
-              {studentProfile.thesisDrafts.length === 0 ? (
-                <div className="simple-list-item">
-                  <strong>No thesis drafts yet</strong>
-                  <span>Upload is required for Bachelor Project.</span>
-                </div>
-              ) : null}
-            </div>
-          </Panel>
-          <div className="stack-list">
-            {projects.map((project) => (
-              <article key={project.id} className="project-card">
-                <div className="list-card-head">
-                  <div>
-                    <h3>{project.title}</h3>
-                    <span>
-                      {project.course} · {project.createdAt}
-                    </span>
+          {selectedProject ? (
+            <>
+              <div className="directory-layout">
+                <Panel title="My projects" subtitle="Choose one project to manage">
+                  <div className="stack-list">
+                    {projects.map((project) => (
+                      <button
+                        key={project.id}
+                        type="button"
+                        className={`directory-result ${
+                          selectedProject.id === project.id ? 'active' : ''
+                        }`}
+                        onClick={() => setSelectedProjectId(project.id)}
+                      >
+                        <strong>{project.title}</strong>
+                        <span>
+                          {project.course} - {project.visibility} - {project.status}
+                          {project.featured ? ' - Featured' : ''}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                  <div className="tag-row">
-                    <Badge tone="success">{project.visibility}</Badge>
-                    <Badge tone="accent">{project.status}</Badge>
-                  </div>
-                </div>
-                <div className="form-grid">
-                  <label className="full-span">
-                    Project title
-                    <input
-                      value={project.title}
-                      onChange={(event) =>
-                        updateProjectTitle(project.id, event.target.value)
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="button-row">
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => toggleProjectVisibility(project.id)}
-                  >
-                    Toggle Visibility
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => setFeaturedProjectById(project.id)}
-                  >
-                    Make Featured
-                  </button>
-                  {project.course === 'Bachelor Project' ? (
-                    <button
-                      type="button"
-                      className="ghost-button"
-                      onClick={() => markProjectFinalDraft(project.id)}
-                    >
-                      Set Final Draft
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="ghost-button danger"
-                    onClick={() => deleteProject(project.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-                <div className="content-grid">
-                  <Panel title="Project details" subtitle="Course, links, and languages">
-                    <div className="simple-list">
-                      <div className="simple-list-item">
-                        <strong>Course</strong>
-                        <span>{project.course}</span>
-                      </div>
-                      <div className="simple-list-item">
-                        <strong>GitHub</strong>
-                        <span>{project.github}</span>
-                      </div>
-                      <div className="simple-list-item">
-                        <strong>Languages</strong>
-                        <span>{project.languages.join(', ')}</span>
-                      </div>
-                      <div className="simple-list-item">
-                        <strong>Demo video</strong>
-                        <span>{project.demoVideoUrl}</span>
-                      </div>
-                    </div>
-                  </Panel>
-                  <Panel title="Tasks" subtitle="Ordered list for the project owner">
-                    <div className="simple-list">
-                      {project.tasks.map((task) => (
-                        <div key={task.id} className="simple-list-item">
-                          <strong>{task.title}</strong>
-                          <span>
-                            {task.owner} · {task.state}
-                          </span>
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() => moveTaskToTop(project.id, task.id)}
-                          >
-                            Move Top
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="task-composer">
+                </Panel>
+                <Panel title="Project details" subtitle="Title, links, visibility, and featured status">
+                  <div className="form-grid">
+                    <label className="full-span">
+                      Project title
                       <input
-                        value={taskDrafts[project.id] ?? ''}
+                        value={selectedProject.title}
                         onChange={(event) =>
-                          setTaskDrafts((current) => ({
+                          updateProjectTitle(selectedProject.id, event.target.value)
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className="simple-list top-space">
+                    <div className="simple-list-item">
+                      <strong>Course</strong>
+                      <span>{selectedProject.course}</span>
+                    </div>
+                    <div className="simple-list-item">
+                      <strong>GitHub</strong>
+                      <span>{selectedProject.github}</span>
+                    </div>
+                    <div className="simple-list-item">
+                      <strong>Languages</strong>
+                      <span>{selectedProject.languages.join(', ')}</span>
+                    </div>
+                    <div className="simple-list-item">
+                      <strong>Demo video</strong>
+                      <span>{selectedProject.demoVideoUrl}</span>
+                    </div>
+                  </div>
+                  {selectedProject.isFlagged ? (
+                    <div className="notice-banner top-space">
+                      Flag reason: {selectedProject.flagReason ?? 'Project flagged for review.'}
+                    </div>
+                  ) : null}
+                  {selectedProject.isFlagged ? (
+                    <div className="composer">
+                      <textarea
+                        rows={3}
+                        value={appealDrafts[selectedProject.id] ?? ''}
+                        onChange={(event) =>
+                          setAppealDrafts((current) => ({
                             ...current,
-                            [project.id]: event.target.value,
+                            [selectedProject.id]: event.target.value,
                           }))
                         }
-                        placeholder="Add a new task"
+                        placeholder="Explain why this project should be unflagged"
                       />
                       <button
                         type="button"
-                        className="ghost-button"
-                        onClick={() => addTaskToProject(project.id)}
+                        className="primary-button"
+                        onClick={() =>
+                          sendProjectAppeal(
+                            selectedProject.id,
+                            appealDrafts[selectedProject.id] ?? ''
+                          )
+                        }
                       >
-                        Add Task
+                        Send Appeal
                       </button>
                     </div>
-                  </Panel>
-                  <Panel title="Feedback" subtitle="Instructor comments for this project">
-                    <div className="simple-list">
-                      {project.feedback.map((feedback) => (
-                        <div key={feedback.id} className="simple-list-item">
-                          <strong>{feedback.author}</strong>
-                          <span>{feedback.message}</span>
+                  ) : null}
+                  <div className="button-row top-space">
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => toggleProjectVisibility(selectedProject.id)}
+                    >
+                      {selectedProject.visibility === 'Public'
+                        ? 'Hide from Portfolio'
+                        : 'Show on Portfolio'}
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      disabled={selectedProject.featured}
+                      onClick={() => setFeaturedProjectById(selectedProject.id)}
+                    >
+                      {selectedProject.featured ? 'Featured' : 'Make Featured'}
+                    </button>
+                    {selectedProject.course === 'Bachelor Project' ? (
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => markProjectFinalDraft(selectedProject.id)}
+                      >
+                        Set Final Draft
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="ghost-button danger"
+                      onClick={() => deleteProject(selectedProject.id)}
+                    >
+                      Delete Project
+                    </button>
+                  </div>
+                </Panel>
+              </div>
+
+              <div className="content-grid">
+                <Panel title="Tasks" subtitle="Edit status, owner, deadline, and order">
+                  <div className="stack-list">
+                    {selectedProject.tasks.map((task) => (
+                      <article key={task.id} className="list-card">
+                        <div className="form-grid">
+                          <label>
+                            Task
+                            <input
+                              value={task.title}
+                              onChange={(event) =>
+                                updateProjectTask(selectedProject.id, task.id, {
+                                  title: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label>
+                            Assigned to
+                            <input
+                              value={task.owner}
+                              onChange={(event) =>
+                                updateProjectTask(selectedProject.id, task.id, {
+                                  owner: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label>
+                            Status
+                            <select
+                              value={task.state}
+                              onChange={(event) =>
+                                updateProjectTask(selectedProject.id, task.id, {
+                                  state: event.target.value as Project['tasks'][number]['state'],
+                                })
+                              }
+                            >
+                              <option value="pending">pending</option>
+                              <option value="postponed">post-poned</option>
+                              <option value="completed">completed</option>
+                            </select>
+                          </label>
+                          <label>
+                            Deadline
+                            <input
+                              value={task.due}
+                              onChange={(event) =>
+                                updateProjectTask(selectedProject.id, task.id, {
+                                  due: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="full-span">
+                            Short description
+                            <input
+                              value={task.description}
+                              onChange={(event) =>
+                                updateProjectTask(selectedProject.id, task.id, {
+                                  description: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
                         </div>
-                      ))}
-                    </div>
-                  </Panel>
-                  <Panel title="Invitations" subtitle="Send, cancel, accept, or reject">
-                    <div className="simple-list">
-                      {project.invitations.map((invitation) => (
-                        <div key={invitation.id} className="simple-list-item">
-                          <strong>{invitation.recipient}</strong>
-                          <span>
-                            {invitation.role} · {invitation.status}
-                          </span>
-                          <div className="button-row">
-                            <button
-                              type="button"
-                              className="ghost-button"
-                              onClick={() =>
-                                updateInvitationStatus(project.id, invitation.id, 'Pending')
-                              }
-                            >
-                              Send
-                            </button>
-                            <button
-                              type="button"
-                              className="ghost-button"
-                              onClick={() =>
-                                updateInvitationStatus(project.id, invitation.id, 'Accepted')
-                              }
-                            >
-                              Accept
-                            </button>
-                            <button
-                              type="button"
-                              className="ghost-button danger"
-                              onClick={() =>
-                                updateInvitationStatus(project.id, invitation.id, 'Rejected')
-                              }
-                            >
-                              Reject / Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Panel>
-                  <Panel title="Collaborators" subtitle="Project creator controls">
-                    <div className="simple-list">
-                      {project.collaborators.map((collaborator) => (
-                        <div key={collaborator} className="simple-list-item">
-                          <strong>{collaborator}</strong>
-                          <span>Active collaborator</span>
+                        <div className="button-row">
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={() => moveTaskToTop(selectedProject.id, task.id)}
+                          >
+                            Move Top
+                          </button>
                           <button
                             type="button"
                             className="ghost-button danger"
-                            onClick={() => removeCollaborator(project.id, collaborator)}
+                            onClick={() => deleteProjectTask(selectedProject.id, task.id)}
                           >
-                            Remove
+                            Delete Task
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  </Panel>
-                </div>
-              </article>
-            ))}
-          </div>
+                      </article>
+                    ))}
+                  </div>
+                  <div className="task-composer">
+                    <input
+                      value={taskDrafts[selectedProject.id] ?? ''}
+                      onChange={(event) =>
+                        setTaskDrafts((current) => ({
+                          ...current,
+                          [selectedProject.id]: event.target.value,
+                        }))
+                      }
+                      placeholder="Add a new task"
+                    />
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => addTaskToProject(selectedProject.id)}
+                    >
+                      Add Task
+                    </button>
+                  </div>
+                </Panel>
+
+                <Panel title="Invitations" subtitle="Collaborator and instructor invitation status">
+                  <div className="simple-list">
+                    {selectedProject.invitations.map((invitation) => (
+                      <div key={invitation.id} className="simple-list-item">
+                        <strong>{invitation.recipient}</strong>
+                        <span>
+                          {invitation.role} - {invitation.status}
+                        </span>
+                        {invitation.status === 'Pending' ? (
+                          <button
+                            type="button"
+                            className="ghost-button danger"
+                            onClick={() =>
+                              updateInvitationStatus(
+                                selectedProject.id,
+                                invitation.id,
+                                'Rejected'
+                              )
+                            }
+                          >
+                            Cancel Invitation
+                          </button>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+
+                <Panel title="Collaborators" subtitle="Project creator controls">
+                  <div className="simple-list">
+                    {selectedProject.collaborators.map((collaborator) => (
+                      <div key={collaborator} className="simple-list-item">
+                        <strong>{collaborator}</strong>
+                        <span>Active collaborator</span>
+                        <button
+                          type="button"
+                          className="ghost-button danger"
+                          onClick={() => removeCollaborator(selectedProject.id, collaborator)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+
+                <Panel
+                  title="Bachelor thesis drafts"
+                  subtitle="Only the final draft is public"
+                  action={
+                    <button type="button" className="ghost-button" onClick={uploadThesisDraft}>
+                      Upload Draft
+                    </button>
+                  }
+                >
+                  <div className="simple-list">
+                    {studentProfile.thesisDrafts.map((draft) => (
+                      <div key={draft.id} className="simple-list-item">
+                        <strong>{draft.title}</strong>
+                        <span>
+                          {draft.uploadedAt} -{' '}
+                          {draft.isFinal ? 'Final public draft' : 'Private draft'}
+                        </span>
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          disabled={draft.isFinal}
+                          onClick={() => setFinalThesisDraft(draft.id)}
+                        >
+                          {draft.isFinal ? 'Final Draft' : 'Set Final Draft'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+              </div>
+            </>
+          ) : null}
         </div>
       );
     case 'internships':
@@ -556,6 +717,29 @@ export function StudentWorkspace({
                   placeholder="Frontend, Cairo, Hybrid, 8 weeks"
                 />
               </label>
+              <label>
+                Duration
+                <select
+                  value={durationFilter}
+                  onChange={(event) => setDurationFilter(event.target.value)}
+                >
+                  {durationOptions.map((duration) => (
+                    <option key={duration}>{duration}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Sort
+                <select
+                  value={internshipSort}
+                  onChange={(event) =>
+                    setInternshipSort(event.target.value as 'posted' | 'company')
+                  }
+                >
+                  <option value="posted">Posting date</option>
+                  <option value="company">Company name</option>
+                </select>
+              </label>
               <label className="full-span">
                 Cover letter
                 <textarea
@@ -567,7 +751,7 @@ export function StudentWorkspace({
             </div>
           </Panel>
           <div className="stack-list">
-            {internships.map((internship) => (
+            {displayedInternships.map((internship) => (
               <article key={internship.id} className="project-card">
                 <div className="list-card-head">
                   <div>

@@ -49,19 +49,19 @@ const tabLabels: Record<DirectoryTab, string> = {
 
 const directoryTitles: Record<Role, { title: string; description: string }> = {
   student: {
-    title: 'Explore',
+    title: 'Directory',
     description: 'Find projects, student portfolios, instructors, and favorites.',
   },
   employer: {
-    title: 'Talent',
+    title: 'Directory',
     description: 'Find student portfolios, strong projects, and instructors.',
   },
   instructor: {
-    title: 'Browse',
+    title: 'Directory',
     description: 'Find projects, portfolios, and linked course instructors.',
   },
   admin: {
-    title: 'Records',
+    title: 'Directory',
     description: 'Search platform projects, student portfolios, and instructors.',
   },
 };
@@ -77,7 +77,11 @@ export function DirectoryPage({
   const [activeTab, setActiveTab] = useState<DirectoryTab>(tabs[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('All');
+  const [instructorFilter, setInstructorFilter] = useState('All');
+  const [projectDateFilter, setProjectDateFilter] = useState('All');
   const [portfolioMajor, setPortfolioMajor] = useState('All');
+  const [portfolioSkill, setPortfolioSkill] = useState('All');
+  const [portfolioSort, setPortfolioSort] = useState<'projects' | 'rating'>('projects');
   const [projectSort, setProjectSort] = useState<'rating' | 'date'>('rating');
   const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id ?? '');
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(portfolios[0]?.id ?? '');
@@ -99,6 +103,18 @@ export function DirectoryPage({
   const portfolioMajorOptions = [
     'All',
     ...Array.from(new Set(portfolios.map((portfolio) => portfolio.major))),
+  ];
+  const portfolioSkillOptions = [
+    'All',
+    ...Array.from(new Set(portfolios.flatMap((portfolio) => portfolio.topSkills))),
+  ];
+  const projectInstructorOptions = [
+    'All',
+    ...Array.from(new Set(projects.map((project) => getProjectInstructor(project, courses)))),
+  ];
+  const projectDateOptions = [
+    'All',
+    ...Array.from(new Set(projects.map((project) => project.createdAt))),
   ];
 
   const instructors: InstructorCard[] = Array.from(
@@ -149,8 +165,12 @@ export function DirectoryPage({
         .toLowerCase()
         .includes(normalizedSearch);
       const matchesCourse = courseFilter === 'All' || project.course === courseFilter;
+      const matchesInstructor =
+        instructorFilter === 'All' || instructor === instructorFilter;
+      const matchesDate =
+        projectDateFilter === 'All' || project.createdAt === projectDateFilter;
 
-      return matchesSearch && matchesCourse;
+      return matchesSearch && matchesCourse && matchesInstructor && matchesDate;
     })
     .sort((first, second) =>
       projectSort === 'rating'
@@ -170,10 +190,16 @@ export function DirectoryPage({
         .toLowerCase()
         .includes(normalizedSearch);
       const matchesMajor = portfolioMajor === 'All' || portfolio.major === portfolioMajor;
+      const matchesSkill =
+        portfolioSkill === 'All' || portfolio.topSkills.includes(portfolioSkill);
 
-      return matchesSearch && matchesMajor;
+      return matchesSearch && matchesMajor && matchesSkill;
     })
-    .sort((first, second) => second.projectsCount - first.projectsCount);
+    .sort((first, second) =>
+      portfolioSort === 'projects'
+        ? second.projectsCount - first.projectsCount
+        : second.rating - first.rating
+    );
 
   const selectedProject =
     projects.find((project) => project.id === selectedProjectId) ?? filteredProjects[0];
@@ -252,6 +278,28 @@ export function DirectoryPage({
             </select>
           </label>
           <label>
+            Instructor
+            <select
+              value={instructorFilter}
+              onChange={(event) => setInstructorFilter(event.target.value)}
+            >
+              {projectInstructorOptions.map((instructor) => (
+                <option key={instructor}>{instructor}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Creation date
+            <select
+              value={projectDateFilter}
+              onChange={(event) => setProjectDateFilter(event.target.value)}
+            >
+              {projectDateOptions.map((date) => (
+                <option key={date}>{date}</option>
+              ))}
+            </select>
+          </label>
+          <label>
             Project sort
             <select
               value={projectSort}
@@ -270,6 +318,29 @@ export function DirectoryPage({
               {portfolioMajorOptions.map((major) => (
                 <option key={major}>{major}</option>
               ))}
+            </select>
+          </label>
+          <label>
+            Skill
+            <select
+              value={portfolioSkill}
+              onChange={(event) => setPortfolioSkill(event.target.value)}
+            >
+              {portfolioSkillOptions.map((skill) => (
+                <option key={skill}>{skill}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Portfolio sort
+            <select
+              value={portfolioSort}
+              onChange={(event) =>
+                setPortfolioSort(event.target.value as 'projects' | 'rating')
+              }
+            >
+              <option value="projects">Number of projects</option>
+              <option value="rating">Rating</option>
             </select>
           </label>
         </div>

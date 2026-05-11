@@ -18,7 +18,7 @@ export function NotificationsPage({
   onToggleRead,
 }: NotificationsPageProps) {
   return (
-    <div className="page-stack">
+    <div className="page-stack notifications-page">
       <PageHeader
         eyebrow={roleMeta[role].label}
         title="Notifications"

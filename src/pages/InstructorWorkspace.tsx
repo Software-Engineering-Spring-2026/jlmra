@@ -16,6 +16,7 @@ type InstructorWorkspaceProps = {
   instructorProfile: InstructorProfile;
   setInstructorProfile: React.Dispatch<React.SetStateAction<InstructorProfile>>;
   saveInstructorProfile: () => void;
+  uploadInstructorProfilePicture: () => void;
   courses: Course[];
   toggleCourseLink: (code: string) => void;
   projects: Project[];
@@ -44,6 +45,7 @@ export function InstructorWorkspace({
   instructorProfile,
   setInstructorProfile,
   saveInstructorProfile,
+  uploadInstructorProfilePicture,
   courses,
   toggleCourseLink,
   projects,
@@ -145,7 +147,19 @@ export function InstructorWorkspace({
             }
           />
           <div className="content-grid">
-            <Panel title="Public details" subtitle="Bio, interests, and background">
+            <Panel
+              title="Public details"
+              subtitle="Bio, interests, background, and profile picture"
+              action={
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={uploadInstructorProfilePicture}
+                >
+                  Upload Picture
+                </button>
+              }
+            >
               <div className="form-grid">
                 <label>
                   Name
