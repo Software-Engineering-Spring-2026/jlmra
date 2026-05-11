@@ -140,8 +140,21 @@ export function StudentWorkspace({
     'All',
     ...Array.from(new Set(internships.map((internship) => internship.duration))),
   ];
-  const postedTime = (value: string) =>
-    value === 'Today' ? Date.now() : Date.parse(value) || 0;
+  const postedTime = (value: string) => {
+    if (value === 'Today') return Date.now();
+    // Parse format like "14 Apr 2026"
+    const parts = value.split(' ');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const monthMap: Record<string, number> = {
+        'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+        'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+      };
+      const date = new Date(parseInt(year), monthMap[month] || 0, parseInt(day));
+      return date.getTime() || 0;
+    }
+    return Date.parse(value) || 0;
+  };
   const displayedInternships = internships
     .filter(
       (internship) => durationFilter === 'All' || internship.duration === durationFilter
