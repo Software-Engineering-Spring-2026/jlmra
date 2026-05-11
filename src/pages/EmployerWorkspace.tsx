@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { type WorkspacePage } from '../appConfig';
 import {
   type Conversation,
@@ -15,7 +15,11 @@ type InternshipDraft = {
   title: string;
   location: string;
   duration: string;
+  deadline: string;
   description: string;
+  responsibilities: string;
+  skills: string;
+  programmingLanguages: string;
 };
 
 type EmployerWorkspaceProps = {
@@ -88,6 +92,36 @@ export function EmployerWorkspace({
   onToggleNotificationsEnabled,
   onToggleNotificationRead,
 }: EmployerWorkspaceProps) {
+  const [selectedInternshipId, setSelectedInternshipId] = useState(
+    employerInternships[0]?.id ?? ''
+  );
+  const [applicationSort, setApplicationSort] = useState<'contributors' | 'status'>(
+    'contributors'
+  );
+  const selectedInternship =
+    employerInternships.find((internship) => internship.id === selectedInternshipId) ??
+    employerInternships[0];
+  const completedStudents = employerInternships.reduce(
+    (count, internship) =>
+      count +
+      internship.applications.filter(
+        (application) => application.status === 'Completed'
+      ).length,
+    0
+  );
+  const internshipsByPostingDate = employerInternships
+    .slice()
+    .sort((first, second) => Date.parse(second.postedOn) - Date.parse(first.postedOn));
+  const deadlineTime = (deadline: string) => Date.parse(deadline) || 0;
+  const canArchive = (internship: Internship) =>
+    deadlineTime(internship.deadline) < new Date('2026-05-11T12:00:00').getTime();
+  const sortedApplications = (internship: Internship) =>
+    internship.applications.slice().sort((first, second) =>
+      applicationSort === 'contributors'
+        ? second.score - first.score
+        : first.status.localeCompare(second.status)
+    );
+
   switch (currentPage) {
     case 'dashboard':
       return (
@@ -114,18 +148,16 @@ export function EmployerWorkspace({
             />
             <StatCard
               label="Open internships"
-              value={String(employerInternships.length)}
-              helper="Internship management has its own focused page."
+              value={String(
+                employerInternships.filter((internship) => internship.status === 'Live')
+                  .length
+              )}
+              helper={`${employerInternships.length} internships offered over time.`}
             />
             <StatCard
-              label="Applicants"
-              value={String(
-                employerInternships.reduce(
-                  (count, internship) => count + internship.applications.length,
-                  0
-                )
-              )}
-              helper="Applicants are grouped by internship on the applicants page."
+              label="Completed students"
+              value={String(completedStudents)}
+              helper="Students marked completed on internships offered by this company."
             />
           </div>
           <div className="content-grid">
@@ -139,6 +171,19 @@ export function EmployerWorkspace({
                   <strong>Contact</strong>
                   <span>{employerProfile.companyEmail}</span>
                 </div>
+              </div>
+            </Panel>
+            <Panel title="Internships offered over time" subtitle="Posting history and completed students">
+              <div className="simple-list">
+                {internshipsByPostingDate.map((internship) => (
+                  <div key={internship.id} className="simple-list-item">
+                    <strong>{internship.title}</strong>
+                    <span>
+                      Posted {internship.postedOn} · {internship.applications.length}{' '}
+                      applicants · {internship.status}
+                    </span>
+                  </div>
+                ))}
               </div>
             </Panel>
             <Panel title="Recommended student portfolios" subtitle="Based on saved employer interests">
@@ -233,7 +278,7 @@ export function EmployerWorkspace({
             </Panel>
             <Panel
               title="Verification documents"
-              subtitle={`${employerProfile.verificationStatus} · ${employerProfile.address}`}
+              subtitle={`${employerProfile.verificationStatus} · Required PDF proof from registration`}
               action={
                 <button
                   type="button"
@@ -272,7 +317,7 @@ export function EmployerWorkspace({
           <div className="content-grid content-grid-wide">
             <Panel
               title={editingInternshipId ? 'Edit internship' : 'Create internship'}
-              subtitle="A simple form for employer internship CRUD"
+              subtitle="Title, details, responsibilities, skills, deadline, and programming languages"
             >
               <div className="form-grid">
                 <label>
@@ -311,8 +356,21 @@ export function EmployerWorkspace({
                     }
                   />
                 </label>
+                <label>
+                  Application deadline
+                  <input
+                    value={internshipDraft.deadline}
+                    onChange={(event) =>
+                      setInternshipDraft((current) => ({
+                        ...current,
+                        deadline: event.target.value,
+                      }))
+                    }
+                    placeholder="30 Apr 2026"
+                  />
+                </label>
                 <label className="full-span">
-                  Description
+                  Internship details
                   <textarea
                     rows={4}
                     value={internshipDraft.description}
@@ -322,6 +380,45 @@ export function EmployerWorkspace({
                         description: event.target.value,
                       }))
                     }
+                  />
+                </label>
+                <label className="full-span">
+                  Responsibilities
+                  <textarea
+                    rows={3}
+                    value={internshipDraft.responsibilities}
+                    onChange={(event) =>
+                      setInternshipDraft((current) => ({
+                        ...current,
+                        responsibilities: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  Skills
+                  <input
+                    value={internshipDraft.skills}
+                    onChange={(event) =>
+                      setInternshipDraft((current) => ({
+                        ...current,
+                        skills: event.target.value,
+                      }))
+                    }
+                    placeholder="React, Analytics"
+                  />
+                </label>
+                <label>
+                  Programming languages
+                  <input
+                    value={internshipDraft.programmingLanguages}
+                    onChange={(event) =>
+                      setInternshipDraft((current) => ({
+                        ...current,
+                        programmingLanguages: event.target.value,
+                      }))
+                    }
+                    placeholder="TypeScript, Python"
                   />
                 </label>
               </div>
@@ -335,15 +432,21 @@ export function EmployerWorkspace({
                 </button>
               </div>
             </Panel>
-            <Panel title="Current postings" subtitle="Focused list of employer openings">
+            <Panel title="My internships" subtitle="Select an internship from the company list">
               <div className="stack-list">
                 {employerInternships.map((internship) => (
-                  <article key={internship.id} className="list-card">
+                  <article
+                    key={internship.id}
+                    className={`list-card ${
+                      selectedInternship?.id === internship.id ? 'active' : ''
+                    }`}
+                  >
                     <div className="list-card-head">
                       <div>
                         <strong>{internship.title}</strong>
                         <span>
-                          {internship.location} · {internship.duration}
+                          {internship.location} · {internship.duration} · Deadline{' '}
+                          {internship.deadline}
                         </span>
                       </div>
                       <Badge tone={internship.status === 'Live' ? 'success' : 'accent'}>
@@ -352,6 +455,13 @@ export function EmployerWorkspace({
                     </div>
                     <p>{internship.description}</p>
                     <div className="button-row">
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => setSelectedInternshipId(internship.id)}
+                      >
+                        Select
+                      </button>
                       <button
                         type="button"
                         className="ghost-button"
@@ -368,6 +478,7 @@ export function EmployerWorkspace({
                             internship.status === 'Archived' ? 'Live' : 'Archived'
                           )
                         }
+                        disabled={internship.status !== 'Archived' && !canArchive(internship)}
                       >
                         {internship.status === 'Archived' ? 'Unarchive' : 'Archive'}
                       </button>
@@ -380,8 +491,11 @@ export function EmployerWorkspace({
                             internship.status === 'Filled' ? 'Live' : 'Filled'
                           )
                         }
+                        disabled={internship.status === 'Archived'}
                       >
-                        {internship.status === 'Filled' ? 'Mark Live' : 'Mark Filled'}
+                        {internship.status === 'Filled'
+                          ? 'Set Currently Hiring'
+                          : 'Mark Position Filled'}
                       </button>
                       <button
                         type="button"
@@ -396,6 +510,31 @@ export function EmployerWorkspace({
               </div>
             </Panel>
           </div>
+          {selectedInternship ? (
+            <Panel
+              title="Selected internship details"
+              subtitle={`${selectedInternship.title} · ${selectedInternship.status}`}
+            >
+              <div className="simple-list">
+                <div className="simple-list-item">
+                  <strong>Responsibilities</strong>
+                  <span>{selectedInternship.responsibilities}</span>
+                </div>
+                <div className="simple-list-item">
+                  <strong>Skills</strong>
+                  <span>{selectedInternship.skills.join(', ')}</span>
+                </div>
+                <div className="simple-list-item">
+                  <strong>Programming languages</strong>
+                  <span>{selectedInternship.programmingLanguages.join(', ')}</span>
+                </div>
+                <div className="simple-list-item">
+                  <strong>Application deadline</strong>
+                  <span>{selectedInternship.deadline}</span>
+                </div>
+              </div>
+            </Panel>
+          ) : null}
         </div>
       );
     case 'applicants':
@@ -406,6 +545,22 @@ export function EmployerWorkspace({
             title="Applicants by internship"
             description="Review applicants and update statuses."
           />
+          <Panel title="Application sorting" subtitle="Rank student applications">
+            <div className="form-grid">
+              <label>
+                Sort applications
+                <select
+                  value={applicationSort}
+                  onChange={(event) =>
+                    setApplicationSort(event.target.value as 'contributors' | 'status')
+                  }
+                >
+                  <option value="contributors">Top contributors</option>
+                  <option value="status">Status</option>
+                </select>
+              </label>
+            </div>
+          </Panel>
           <div className="stack-list">
             {employerInternships.map((internship) => (
               <article key={internship.id} className="project-card">
@@ -417,12 +572,12 @@ export function EmployerWorkspace({
                   <Badge tone="accent">{internship.status}</Badge>
                 </div>
                 <div className="simple-list">
-                  {internship.applications.map((application) => (
+                  {sortedApplications(internship).map((application) => (
                     <div key={application.id} className="applicant-row">
                       <div>
                         <strong>{application.student}</strong>
                         <span>
-                          {application.university} · Score {application.score}
+                          {application.university} · Contributor score {application.score}
                         </span>
                         <p>{application.coverLetter}</p>
                       </div>

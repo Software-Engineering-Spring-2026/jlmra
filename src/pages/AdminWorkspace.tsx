@@ -27,12 +27,6 @@ type AdminWorkspaceProps = {
   createAdminAccount: (name: string, email: string, password: string) => void;
   toggleUserStatus: (userId: string) => void;
   courses: Course[];
-  createCourse: () => void;
-  deleteCourse: (code: string) => void;
-  reviewCourseLinkRequest: (
-    code: string,
-    linkRequestStatus: 'Approved' | 'Rejected'
-  ) => void;
   projects: Project[];
   toggleProjectActivation: (projectId: string) => void;
   viewCompanyDocument: (companyName: string, document: string) => void;
@@ -63,9 +57,6 @@ export function AdminWorkspace({
   createAdminAccount,
   toggleUserStatus,
   courses,
-  createCourse,
-  deleteCourse,
-  reviewCourseLinkRequest,
   projects,
   toggleProjectActivation,
   viewCompanyDocument,
@@ -299,28 +290,33 @@ export function AdminWorkspace({
             </Panel>
           ) : null}
           {approvalTab === 'flagged' ? (
-            <Panel title="Flagged projects" subtitle="Activate or deactivate">
+            <Panel title="Project activation" subtitle="Activate or deactivate any project">
               <div className="stack-list">
-                {projects
-                  .filter((project) => project.isFlagged)
-                  .map((project) => (
-                    <article key={project.id} className="list-card">
-                      <div className="list-card-head">
-                        <div>
-                          <strong>{project.title}</strong>
-                          <span>{project.flagReason ?? 'Flagged for review'}</span>
-                        </div>
-                        <Badge tone="warn">Deactivated</Badge>
+                {projects.map((project) => (
+                  <article key={project.id} className="list-card">
+                    <div className="list-card-head">
+                      <div>
+                        <strong>{project.title}</strong>
+                        <span>
+                          {project.course}
+                          {project.isFlagged && project.flagReason
+                            ? ` · ${project.flagReason}`
+                            : ''}
+                        </span>
                       </div>
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => toggleProjectActivation(project.id)}
-                      >
-                        Reactivate Project
-                      </button>
-                    </article>
-                  ))}
+                      <Badge tone={project.isActive ? 'success' : 'warn'}>
+                        {project.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                    <button
+                      type="button"
+                      className={project.isActive ? 'ghost-button danger' : 'ghost-button'}
+                      onClick={() => toggleProjectActivation(project.id)}
+                    >
+                      {project.isActive ? 'Deactivate Project' : 'Activate Project'}
+                    </button>
+                  </article>
+                ))}
               </div>
             </Panel>
           ) : null}
@@ -412,69 +408,6 @@ export function AdminWorkspace({
                         onClick={() => toggleUserStatus(user.id)}
                       >
                         {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </Panel>
-            <Panel
-              title="Course directory"
-              subtitle="Create, edit, delete, and review links"
-              action={
-                <button type="button" className="ghost-button" onClick={createCourse}>
-                  Create Course
-                </button>
-              }
-            >
-              <div className="stack-list">
-                {courses.map((course) => (
-                  <article key={course.code} className="list-card">
-                    <div className="list-card-head">
-                      <div>
-                        <strong>
-                          {course.code} · {course.name}
-                        </strong>
-                        <span>{course.instructor}</span>
-                      </div>
-                      <Badge tone={course.linked ? 'success' : 'neutral'}>
-                        {course.linked ? 'Linked' : 'Standalone'}
-                      </Badge>
-                    </div>
-                    <div className="button-row">
-                      {course.linkRequestStatus === 'Pending' ? (
-                        <>
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() =>
-                              reviewCourseLinkRequest(course.code, 'Approved')
-                            }
-                          >
-                            Accept Link
-                          </button>
-                          <button
-                            type="button"
-                            className="ghost-button danger"
-                            onClick={() =>
-                              reviewCourseLinkRequest(course.code, 'Rejected')
-                            }
-                          >
-                            Reject Link
-                          </button>
-                        </>
-                      ) : (
-                        <Badge tone="neutral">
-                          {course.linkRequestStatus ?? 'No request'}
-                        </Badge>
-                      )}
-                      <button
-                        type="button"
-                        className="ghost-button danger"
-                        disabled={course.code === 'BP401'}
-                        onClick={() => deleteCourse(course.code)}
-                      >
-                        Delete
                       </button>
                     </div>
                   </article>

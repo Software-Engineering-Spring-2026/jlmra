@@ -16,9 +16,22 @@ type DirectoryPageProps = {
   instructorProfile: InstructorProfile;
   portfolios: PortfolioCard[];
   projects: Project[];
+  onCreateCourse?: (code: string, name: string) => void;
+  onUpdateCourse?: (originalCode: string, changes: { code: string; name: string }) => void;
+  onDeleteCourse?: (code: string) => void;
+  onReviewCourseLinkRequest?: (
+    code: string,
+    linkRequestStatus: 'Approved' | 'Rejected'
+  ) => void;
 };
 
-type DirectoryTab = 'instructors' | 'projects' | 'portfolios' | 'recommended' | 'favorites';
+type DirectoryTab =
+  | 'courses'
+  | 'instructors'
+  | 'projects'
+  | 'portfolios'
+  | 'recommended'
+  | 'favorites';
 
 type InstructorCard = {
   name: string;
@@ -36,10 +49,11 @@ const roleTabs: Record<Role, DirectoryTab[]> = {
   student: ['projects', 'portfolios', 'instructors', 'recommended', 'favorites'],
   employer: ['portfolios', 'projects', 'instructors', 'recommended', 'favorites'],
   instructor: ['projects', 'portfolios', 'instructors', 'recommended'],
-  admin: ['projects', 'portfolios', 'instructors'],
+  admin: ['courses', 'projects', 'portfolios', 'instructors'],
 };
 
 const tabLabels: Record<DirectoryTab, string> = {
+  courses: 'Courses',
   instructors: 'Instructors',
   projects: 'Projects',
   portfolios: 'Portfolios',
@@ -72,6 +86,10 @@ export function DirectoryPage({
   instructorProfile,
   portfolios,
   projects,
+  onCreateCourse,
+  onUpdateCourse,
+  onDeleteCourse,
+  onReviewCourseLinkRequest,
 }: DirectoryPageProps) {
   const tabs = roleTabs[role];
   const [activeTab, setActiveTab] = useState<DirectoryTab>(tabs[0]);
@@ -85,9 +103,15 @@ export function DirectoryPage({
   const [projectSort, setProjectSort] = useState<'rating' | 'date'>('rating');
   const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id ?? '');
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(portfolios[0]?.id ?? '');
+  const [selectedCourseCode, setSelectedCourseCode] = useState(courses[0]?.code ?? '');
   const [selectedInstructorName, setSelectedInstructorName] = useState(
     instructorProfile.name
   );
+  const [editingCourseCode, setEditingCourseCode] = useState<string | null>(null);
+  const [courseDraft, setCourseDraft] = useState({
+    code: '',
+    name: '',
+  });
   const [favoriteProjectIds, setFavoriteProjectIds] = useState<string[]>(
     projects.filter((project) => project.featured).map((project) => project.id)
   );
@@ -116,6 +140,12 @@ export function DirectoryPage({
     'All',
     ...Array.from(new Set(projects.map((project) => project.createdAt))),
   ];
+  const filteredCourses = courses.filter((course) =>
+    [course.code, course.name, course.instructor, course.linkRequestStatus ?? 'No request']
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedSearch)
+  );
 
   const instructors: InstructorCard[] = Array.from(
     new Set([instructorProfile.name, ...courses.map((course) => course.instructor)])
@@ -206,6 +236,8 @@ export function DirectoryPage({
   const selectedPortfolio =
     portfolios.find((portfolio) => portfolio.id === selectedPortfolioId) ??
     filteredPortfolios[0];
+  const selectedCourse =
+    courses.find((course) => course.code === selectedCourseCode) ?? filteredCourses[0];
   const selectedInstructor =
     instructors.find((instructor) => instructor.name === selectedInstructorName) ??
     filteredInstructors[0];
@@ -243,6 +275,33 @@ export function DirectoryPage({
     setPortfolioSkill('All');
     setPortfolioSort('projects');
     setProjectSort('rating');
+  };
+  const startEditingCourse = (course: Course) => {
+    setEditingCourseCode(course.code);
+    setCourseDraft({
+      code: course.code,
+      name: course.name,
+    });
+    setSelectedCourseCode(course.code);
+  };
+  const clearCourseDraft = () => {
+    setEditingCourseCode(null);
+    setCourseDraft({ code: '', name: '' });
+  };
+  const submitCourseDraft = () => {
+    if (!courseDraft.code.trim() || !courseDraft.name.trim()) {
+      return;
+    }
+
+    if (editingCourseCode) {
+      onUpdateCourse?.(editingCourseCode, courseDraft);
+      setSelectedCourseCode(courseDraft.code.trim().toUpperCase());
+    } else {
+      onCreateCourse?.(courseDraft.code, courseDraft.name);
+      setSelectedCourseCode(courseDraft.code.trim().toUpperCase());
+    }
+
+    clearCourseDraft();
   };
 
   return (
@@ -370,6 +429,140 @@ export function DirectoryPage({
           </button>
         </div>
       </section>
+
+      {activeTab === 'courses' ? (
+        <div className="directory-layout">
+          <Panel
+            title="Course directory"
+            subtitle="Create, view, edit, delete, and review course links"
+          >
+            {role === 'admin' ? (
+              <div className="form-grid">
+                <label>
+                  Course code
+                  <input
+                    value={courseDraft.code}
+                    onChange={(event) =>
+                      setCourseDraft((current) => ({
+                        ...current,
+                        code: event.target.value,
+                      }))
+                    }
+                    placeholder="CSEN 706"
+                  />
+                </label>
+                <label>
+                  Course name
+                  <input
+                    value={courseDraft.name}
+                    onChange={(event) =>
+                      setCourseDraft((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                    placeholder="Course name"
+                  />
+                </label>
+                <div className="button-row full-span">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={submitCourseDraft}
+                  >
+                    {editingCourseCode ? 'Save Course' : 'Create Course'}
+                  </button>
+                  <button type="button" className="ghost-button" onClick={clearCourseDraft}>
+                    Clear
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            <div className="stack-list top-space">
+              {filteredCourses.map((course) => (
+                <button
+                  key={course.code}
+                  type="button"
+                  className={`directory-result ${
+                    selectedCourse?.code === course.code ? 'active' : ''
+                  }`}
+                  onClick={() => setSelectedCourseCode(course.code)}
+                >
+                  <strong>
+                    {course.code} · {course.name}
+                  </strong>
+                  <span>
+                    {course.instructor} · {course.linked ? 'Linked' : 'Standalone'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel title="Course details" subtitle="Selected course and link request">
+            {selectedCourse ? (
+              <div className="details-card">
+                <strong>
+                  {selectedCourse.code} · {selectedCourse.name}
+                </strong>
+                <span>{selectedCourse.instructor}</span>
+                <div className="tag-row">
+                  <Badge tone={selectedCourse.linked ? 'success' : 'neutral'}>
+                    {selectedCourse.linked ? 'Linked' : 'Standalone'}
+                  </Badge>
+                  <Badge tone={selectedCourse.linkRequestStatus === 'Pending' ? 'accent' : 'neutral'}>
+                    {selectedCourse.linkRequestStatus ?? 'No request'}
+                  </Badge>
+                </div>
+                {role === 'admin' ? (
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => startEditingCourse(selectedCourse)}
+                    >
+                      Edit Course
+                    </button>
+                    {selectedCourse.linkRequestStatus === 'Pending' ? (
+                      <>
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() =>
+                            onReviewCourseLinkRequest?.(selectedCourse.code, 'Approved')
+                          }
+                        >
+                          Accept Link
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost-button danger"
+                          onClick={() =>
+                            onReviewCourseLinkRequest?.(selectedCourse.code, 'Rejected')
+                          }
+                        >
+                          Reject Link
+                        </button>
+                      </>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="ghost-button danger"
+                      disabled={selectedCourse.code === 'BP401'}
+                      onClick={() => {
+                        onDeleteCourse?.(selectedCourse.code);
+                        setSelectedCourseCode(courses[0]?.code ?? '');
+                      }}
+                    >
+                      Delete Course
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </Panel>
+        </div>
+      ) : null}
 
       {activeTab === 'instructors' ? (
         <div className="directory-layout">

@@ -1095,6 +1095,11 @@ button:active {
     border-color 180ms ease;
 }
 
+.list-card.active {
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  background: var(--accent-soft);
+}
+
 .project-card {
   display: grid;
   gap: 14px;

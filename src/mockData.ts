@@ -87,6 +87,7 @@ export type Project = {
   feedback: ProjectFeedback[];
   invitations: ProjectInvitation[];
   isFlagged: boolean;
+  isActive: boolean;
   flagReason?: string;
 };
 
@@ -133,6 +134,9 @@ export type Internship = {
   postedOn: string;
   contributors: number;
   description: string;
+  responsibilities: string;
+  skills: string[];
+  programmingLanguages: string[];
   tags: string[];
   favorite: boolean;
   recommended: boolean;
@@ -274,6 +278,7 @@ export const initialProjects: Project[] = [
     reportUrl: '',
     summary: 'Internship discovery and project collaboration portal.',
     isFlagged: true,
+    isActive: false,
     flagReason: 'Possible uncredited asset detected in the project demo.',
     rating: 4.8,
     visibility: 'Public',
@@ -353,6 +358,7 @@ export const initialProjects: Project[] = [
     reportUrl: '',
     summary: 'A collaboration board for capstone teams to organize milestones, assign tasks, and collect instructor comments.',
     isFlagged: false,
+    isActive: true,
     rating: 4.3,
     visibility: 'Private',
     featured: false,
@@ -409,6 +415,7 @@ export const initialProjects: Project[] = [
     reportUrl: '',
     summary: 'A marketplace concept for students to showcase projects and freelance work while collecting portfolio analytics.',
     isFlagged: false,
+    isActive: true,
     rating: 4.6,
     visibility: 'Public',
     featured: false,
@@ -468,17 +475,20 @@ export const initialInternships: Internship[] = [
     postedOn: '14 Apr 2026',
     contributors: 8,
     description: 'Work with a lean product team to ship a student-facing dashboard for internship tracking and discovery.',
+    responsibilities: 'Build React screens, fix usability issues, and document component behavior for the product team.',
+    skills: ['React', 'Design Systems', 'Analytics'],
+    programmingLanguages: ['TypeScript', 'JavaScript'],
     tags: ['React', 'Design Systems', 'Analytics'],
     favorite: true,
     recommended: true,
     status: 'Live',
-    applicationStatus: 'Applied',
+    applicationStatus: 'Completed',
     applications: [
       {
         id: 'application-1',
         student: 'Ahmed Hossam',
         university: 'GUC',
-        status: 'Applied',
+        status: 'Completed',
         score: 92,
         coverLetter: 'I care deeply about turning complex flows into calm, understandable interfaces and would love to contribute to your dashboard.',
       },
@@ -504,6 +514,9 @@ export const initialInternships: Internship[] = [
     postedOn: '10 Apr 2026',
     contributors: 5,
     description: 'Partner with product designers to translate polished concepts into reusable frontend components.',
+    responsibilities: 'Convert Figma flows into reusable interface components and support design QA.',
+    skills: ['UI Engineering', 'Component Libraries', 'Prototyping'],
+    programmingLanguages: ['TypeScript', 'CSS'],
     tags: ['UI Engineering', 'Component Libraries', 'Prototyping'],
     favorite: false,
     recommended: true,
@@ -532,6 +545,9 @@ export const initialInternships: Internship[] = [
     postedOn: '16 Apr 2026',
     contributors: 12,
     description: 'Prototype trip-planning experiences, support user testing, and document interface decisions for a mobility product.',
+    responsibilities: 'Prototype trip-planning workflows, prepare user testing scripts, and summarize findings.',
+    skills: ['Research', 'Figma', 'Journey Mapping'],
+    programmingLanguages: ['JavaScript'],
     tags: ['Research', 'Figma', 'Journey Mapping'],
     favorite: true,
     recommended: false,
@@ -551,6 +567,9 @@ export const initialInternships: Internship[] = [
     postedOn: '26 Mar 2026',
     contributors: 4,
     description: 'Help transform recruiting and portfolio data into explainable dashboards for administrators and employers.',
+    responsibilities: 'Create dashboard charts, define metrics, and validate data display with employer users.',
+    skills: ['Data Viz', 'Dashboards', 'Frontend'],
+    programmingLanguages: ['TypeScript', 'Python'],
     tags: ['Data Viz', 'Dashboards', 'Frontend'],
     favorite: false,
     recommended: true,
@@ -628,7 +647,7 @@ export const initialEmployerProfile: EmployerProfile = {
   address: '5A Innovation District, New Cairo',
   mapLocation: { lat: 30.0131, lng: 31.2089 },
   summary: 'We help early-stage teams ship clearer product experiences with a focus on accessibility and performance.',
-  documents: ['Tax Certificate 2025', 'Commercial Registry'],
+  documents: ['Tax Certificate 2025.pdf', 'Commercial Registry.pdf'],
   verificationStatus: 'Approved',
   logo: '',
 };

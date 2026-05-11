@@ -42,7 +42,11 @@ type InternshipDraft = {
   title: string;
   location: string;
   duration: string;
+  deadline: string;
   description: string;
+  responsibilities: string;
+  skills: string;
+  programmingLanguages: string;
 };
 
 type FontScale = 'small' | 'medium' | 'large';
@@ -51,11 +55,59 @@ const emptyInternshipDraft: InternshipDraft = {
   title: '',
   location: 'Hybrid',
   duration: '8 weeks',
+  deadline: '30 Apr 2026',
   description: '',
+  responsibilities: '',
+  skills: '',
+  programmingLanguages: '',
 };
 
 const createId = (prefix: string) =>
   `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+
+const parseReadableDate = (value: string) => {
+  if (value === 'Today') {
+    return Date.now();
+  }
+
+  const monthMap: Record<string, number> = {
+    Jan: 0,
+    Feb: 1,
+    Mar: 2,
+    Apr: 3,
+    May: 4,
+    Jun: 5,
+    Jul: 6,
+    Aug: 7,
+    Sep: 8,
+    Oct: 9,
+    Nov: 10,
+    Dec: 11,
+  };
+  const parts = value.trim().split(' ');
+
+  if (parts.length === 3) {
+    const [dayText, monthText, yearText] = parts;
+    const day = Number.parseInt(dayText, 10);
+    const month = monthMap[monthText];
+    const year = Number.parseInt(yearText, 10);
+
+    if (!Number.isNaN(day) && month !== undefined && !Number.isNaN(year)) {
+      return new Date(year, month, day, 12, 0, 0).getTime();
+    }
+  }
+
+  return Date.parse(value) || 0;
+};
+
+const isDeadlinePassed = (deadline: string) =>
+  parseReadableDate(deadline) < new Date('2026-05-11T12:00:00').getTime();
+
+const splitList = (value: string) =>
+  value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 const defaultNotificationPreferences: Record<Role, boolean> = {
   student: true,
@@ -483,6 +535,7 @@ function App() {
         feedback: [],
         invitations: [],
         isFlagged: false,
+        isActive: true,
       },
       ...current,
     ]);
@@ -766,6 +819,17 @@ function App() {
       ...current,
       documents: [...current.documents, nextDocument],
     }));
+    setCompanyRequests((current) =>
+      current.map((request) =>
+        request.companyName === employerProfile.companyName
+          ? {
+              ...request,
+              documents: [...request.documents, nextDocument],
+              status: 'Pending',
+            }
+          : request
+      )
+    );
 
     addNotification({
       title: 'Verification document uploaded',
@@ -786,7 +850,11 @@ function App() {
       title: target.title,
       location: target.location,
       duration: target.duration,
+      deadline: target.deadline,
       description: target.description,
+      responsibilities: target.responsibilities,
+      skills: target.skills.join(', '),
+      programmingLanguages: target.programmingLanguages.join(', '),
     });
   };
 
@@ -796,9 +864,17 @@ function App() {
   };
 
   const saveInternshipDraft = () => {
-    if (!internshipDraft.title.trim() || !internshipDraft.description.trim()) {
+    if (
+      !internshipDraft.title.trim() ||
+      !internshipDraft.description.trim() ||
+      !internshipDraft.responsibilities.trim() ||
+      !internshipDraft.deadline.trim()
+    ) {
       return;
     }
+
+    const nextSkills = splitList(internshipDraft.skills);
+    const nextLanguages = splitList(internshipDraft.programmingLanguages);
 
     if (editingInternshipId) {
       setInternships((current) =>
@@ -809,7 +885,12 @@ function App() {
                 title: internshipDraft.title.trim(),
                 location: internshipDraft.location,
                 duration: internshipDraft.duration,
+                deadline: internshipDraft.deadline.trim(),
                 description: internshipDraft.description.trim(),
+                responsibilities: internshipDraft.responsibilities.trim(),
+                skills: nextSkills,
+                programmingLanguages: nextLanguages,
+                tags: nextSkills.length > 0 ? nextSkills : internship.tags,
               }
             : internship
         )
@@ -829,11 +910,14 @@ function App() {
           duration: internshipDraft.duration,
           location: internshipDraft.location,
           salary: 'Paid',
-          deadline: '30 Apr 2026',
+          deadline: internshipDraft.deadline.trim(),
           postedOn: 'Today',
           contributors: 4,
           description: internshipDraft.description.trim(),
-          tags: ['Frontend', 'Prototype'],
+          responsibilities: internshipDraft.responsibilities.trim(),
+          skills: nextSkills,
+          programmingLanguages: nextLanguages,
+          tags: nextSkills.length > 0 ? nextSkills : ['Frontend', 'Prototype'],
           favorite: false,
           recommended: false,
           status: 'Live',
@@ -856,6 +940,17 @@ function App() {
     internshipId: string,
     nextStatus: Internship['status']
   ) => {
+    const target = internships.find((internship) => internship.id === internshipId);
+
+    if (!target) {
+      return;
+    }
+
+    if (nextStatus === 'Archived' && !isDeadlinePassed(target.deadline)) {
+      showSaveNotice('Internships can only be archived after the application deadline passes.');
+      return;
+    }
+
     setInternships((current) =>
       current.map((internship) =>
         internship.id === internshipId
@@ -994,6 +1089,7 @@ function App() {
           ? {
               ...project,
               isFlagged: true,
+              isActive: false,
               flagReason: 'Project flagged for a manual plagiarism check.',
             }
           : project
@@ -1014,6 +1110,11 @@ function App() {
   ) => {
     const target = companyRequests.find((request) => request.id === requestId);
     if (!target) {
+      return;
+    }
+
+    if (target.documents.length === 0) {
+      showSaveNotice('Company verification requires at least one uploaded PDF document.');
       return;
     }
 
@@ -1039,11 +1140,55 @@ function App() {
   };
 
   const resolveAppeal = (appealId: string) => {
+    const targetAppeal = appeals.find((appeal) => appeal.id === appealId);
+
     setAppeals((current) =>
       current.map((appeal) =>
         appeal.id === appealId ? { ...appeal, status: 'Resolved' } : appeal
       )
     );
+
+    if (targetAppeal) {
+      setProjects((current) =>
+        current.map((project) =>
+          project.title === targetAppeal.projectTitle
+            ? { ...project, isFlagged: false, isActive: true }
+            : project
+        )
+      );
+    }
+  };
+
+  const registerEmployerCompany = (request: CompanyRequest) => {
+    setCompanyRequests((current) => {
+      const existingRequest = current.find(
+        (item) =>
+          item.companyEmail.toLowerCase() === request.companyEmail.toLowerCase() ||
+          item.companyName.toLowerCase() === request.companyName.toLowerCase()
+      );
+
+      if (!existingRequest) {
+        return [request, ...current];
+      }
+
+      return current.map((item) =>
+        item.id === existingRequest.id
+          ? {
+              ...item,
+              ...request,
+              id: item.id,
+              status: 'Pending',
+            }
+          : item
+      );
+    });
+
+    addNotification({
+      title: 'Company registration submitted',
+      message: `${request.companyName} uploaded verification PDFs and is waiting for administrator review.`,
+      audience: ['employer', 'admin'],
+      tone: 'warn',
+    });
   };
 
   const createAdminAccount = (name: string, email: string, password: string) => {
@@ -1056,7 +1201,7 @@ function App() {
         name: name.trim() || `Admin ${nextNumber}`,
         email: email.trim() || `admin${nextNumber}@guc.edu.eg`,
         role: 'admin',
-        status: 'Active',
+            status: 'Active',
         password: password.trim() || 'Admin123',
         otp: '225790',
         profilePicture: '',
@@ -1077,19 +1222,64 @@ function App() {
     );
   };
 
-  const createCourse = () => {
-    const nextNumber = courses.length + 701;
+  const createCourseFromDirectory = (code: string, name: string) => {
+    const normalizedCode = code.trim().toUpperCase();
+    const normalizedName = name.trim();
 
-    setCourses((current) => [
-      ...current,
-      {
-        code: `CSEN ${nextNumber}`,
-        name: `New Course ${nextNumber}`,
-        instructor: instructorProfile.name,
-        linked: false,
-        linkRequestStatus: 'Pending',
-      },
-    ]);
+    if (!normalizedCode || !normalizedName) {
+      return;
+    }
+
+    setCourses((current) => {
+      if (current.some((course) => course.code === normalizedCode)) {
+        return current;
+      }
+
+      return [
+        ...current,
+        {
+          code: normalizedCode,
+          name: normalizedName,
+          instructor: instructorProfile.name,
+          linked: false,
+          linkRequestStatus: 'Pending',
+        },
+      ];
+    });
+  };
+
+  const updateCourse = (
+    originalCode: string,
+    changes: {
+      code: string;
+      name: string;
+    }
+  ) => {
+    const normalizedCode = changes.code.trim().toUpperCase();
+    const normalizedName = changes.name.trim();
+
+    if (!normalizedCode || !normalizedName) {
+      return;
+    }
+
+    setCourses((current) => {
+      if (
+        normalizedCode !== originalCode &&
+        current.some((course) => course.code === normalizedCode)
+      ) {
+        return current;
+      }
+
+      return current.map((course) =>
+        course.code === originalCode
+          ? {
+              ...course,
+              code: normalizedCode,
+              name: normalizedName,
+            }
+          : course
+      );
+    });
   };
 
   const deleteCourse = (code: string) => {
@@ -1116,7 +1306,7 @@ function App() {
   const toggleProjectActivation = (projectId: string) => {
     setProjects((current) =>
       current.map((project) =>
-        project.id === projectId ? { ...project, isFlagged: !project.isFlagged } : project
+        project.id === projectId ? { ...project, isActive: !project.isActive } : project
       )
     );
   };
@@ -1284,6 +1474,10 @@ function App() {
           instructorProfile={instructorProfile}
           portfolios={portfolios}
           projects={projects}
+          onCreateCourse={createCourseFromDirectory}
+          onUpdateCourse={updateCourse}
+          onDeleteCourse={deleteCourse}
+          onReviewCourseLinkRequest={reviewCourseLinkRequest}
         />
       );
     }
@@ -1402,9 +1596,6 @@ function App() {
             createAdminAccount={createAdminAccount}
             toggleUserStatus={toggleUserStatus}
             courses={courses}
-            createCourse={createCourse}
-            deleteCourse={deleteCourse}
-            reviewCourseLinkRequest={reviewCourseLinkRequest}
             projects={projects}
             toggleProjectActivation={toggleProjectActivation}
             viewCompanyDocument={viewCompanyDocument}
@@ -1439,6 +1630,7 @@ function App() {
           loginError={loginError}
           onLoginCredentials={handleLoginCredentials}
           onVerifyOtp={handleVerifyOtp}
+          onRegisterEmployerCompany={registerEmployerCompany}
         />
       </div>
     );

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { type DemoAccount } from '../appConfig';
-import { type Role, roleMeta } from '../mockData';
+import { type CompanyRequest, type Role, roleMeta } from '../mockData';
 import { Icon } from '../components/icons';
 
 type LoginScreenProps = {
@@ -20,6 +20,7 @@ type LoginScreenProps = {
   loginError: string;
   onLoginCredentials: () => boolean;
   onVerifyOtp: () => void;
+  onRegisterEmployerCompany: (request: CompanyRequest) => void;
 };
 
 type SignupRole = Exclude<Role, 'admin'>;
@@ -46,6 +47,7 @@ export function LoginScreen({
   loginError,
   onLoginCredentials,
   onVerifyOtp,
+  onRegisterEmployerCompany,
 }: LoginScreenProps) {
   const [authMode, setAuthMode] = useState<
     'signin' | 'otp' | 'signup' | 'forgot' | 'forgot-otp'
@@ -59,6 +61,8 @@ export function LoginScreen({
     email: '',
     password: '',
     confirmPassword: '',
+    taxCertificate: '',
+    commercialRegister: '',
   });
   const [authNotice, setAuthNotice] = useState('');
   const [signupError, setSignupError] = useState('');
@@ -106,6 +110,17 @@ export function LoginScreen({
       }));
     };
 
+  const updateSignupFile =
+    (field: 'taxCertificate' | 'commercialRegister') =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const fileName = event.target.files?.[0]?.name ?? '';
+
+      setSignupForm((current) => ({
+        ...current,
+        [field]: fileName,
+      }));
+    };
+
   const handleSignupSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -121,6 +136,24 @@ export function LoginScreen({
       !signupForm.password.trim()
     ) {
       setSignupError('Please fill in the required account details.');
+      return;
+    }
+
+    if (
+      signupRole === 'employer' &&
+      (!signupForm.companyName.trim() ||
+        !signupForm.companyEmail.trim() ||
+        !signupForm.taxCertificate.trim())
+    ) {
+      setSignupError('Employer registration requires company details and a tax certificate PDF.');
+      return;
+    }
+
+    if (
+      signupRole === 'employer' &&
+      !signupForm.taxCertificate.toLowerCase().endsWith('.pdf')
+    ) {
+      setSignupError('The tax certificate must be uploaded as a PDF.');
       return;
     }
 
@@ -150,6 +183,21 @@ export function LoginScreen({
     };
 
     accounts.push(nextAccount);
+    if (signupRole === 'employer') {
+      onRegisterEmployerCompany({
+        id: `company-signup-${Date.now()}`,
+        companyName: signupForm.companyName.trim(),
+        owner: nextAccount.name,
+        companyEmail: normalizedEmail,
+        address: 'Pending address',
+        summary: 'New employer registration submitted from the sign up flow.',
+        documents: [
+          signupForm.taxCertificate.trim(),
+          signupForm.commercialRegister.trim(),
+        ].filter(Boolean),
+        status: 'Pending',
+      });
+    }
     window.localStorage.setItem(
       savedSignupAccountsKey,
       JSON.stringify(accounts.filter((account) => account.id.startsWith('signup-')))
@@ -163,6 +211,8 @@ export function LoginScreen({
       email: '',
       password: '',
       confirmPassword: '',
+      taxCertificate: '',
+      commercialRegister: '',
     });
     setSignupError('');
     setAuthNotice('Account created. Sign in with OTP 000000.');
@@ -394,6 +444,28 @@ export function LoginScreen({
                       placeholder="Enter company email"
                       onChange={updateSignupForm('companyEmail')}
                     />
+                  </label>
+                  <label>
+                    Tax certificate PDF
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={updateSignupFile('taxCertificate')}
+                    />
+                    {signupForm.taxCertificate ? (
+                      <span className="subtle-copy">{signupForm.taxCertificate}</span>
+                    ) : null}
+                  </label>
+                  <label>
+                    Commercial register PDF
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={updateSignupFile('commercialRegister')}
+                    />
+                    {signupForm.commercialRegister ? (
+                      <span className="subtle-copy">{signupForm.commercialRegister}</span>
+                    ) : null}
                   </label>
                 </>
               ) : null}

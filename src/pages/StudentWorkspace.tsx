@@ -142,17 +142,28 @@ export function StudentWorkspace({
   ];
   const postedTime = (value: string) => {
     if (value === 'Today') return Date.now();
-    // Parse format like "14 Apr 2026"
-    const parts = value.split(' ');
+
+    // Parse format like "14 Apr 2026" - create a more reliable mapping
+    const monthMap: Record<string, number> = {
+      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
+
+    const parts = value.trim().split(' ');
     if (parts.length === 3) {
-      const [day, month, year] = parts;
-      const monthMap: Record<string, number> = {
-        'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
-        'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
-      };
-      const date = new Date(parseInt(year), monthMap[month] || 0, parseInt(day));
-      return date.getTime() || 0;
+      const [dayStr, monthStr, yearStr] = parts;
+      const day = parseInt(dayStr);
+      const month = monthMap[monthStr];
+      const year = parseInt(yearStr);
+
+      if (!isNaN(day) && month !== undefined && !isNaN(year)) {
+        // Create date at noon to avoid timezone issues
+        const date = new Date(year, month, day, 12, 0, 0);
+        return date.getTime();
+      }
     }
+
+    // Fallback to standard parsing
     return Date.parse(value) || 0;
   };
   const displayedInternships = internships
@@ -1007,8 +1018,18 @@ export function StudentWorkspace({
                   </Badge>
                 </div>
                 <p>{internship.description}</p>
+                <div className="simple-list">
+                  <div className="simple-list-item">
+                    <strong>Responsibilities</strong>
+                    <span>{internship.responsibilities}</span>
+                  </div>
+                  <div className="simple-list-item">
+                    <strong>Programming languages</strong>
+                    <span>{internship.programmingLanguages.join(', ')}</span>
+                  </div>
+                </div>
                 <div className="tag-row">
-                  {internship.tags.map((tag) => (
+                  {internship.skills.map((tag) => (
                     <Badge key={tag}>{tag}</Badge>
                   ))}
                 </div>
@@ -1052,13 +1073,58 @@ export function StudentWorkspace({
       );
     case 'notifications':
       return (
-        <NotificationsPage
-          role="student"
-          notifications={notifications}
-          enabled={notificationsEnabled}
-          onToggleEnabled={onToggleNotificationsEnabled}
-          onToggleRead={onToggleNotificationRead}
-        />
+        <div className="page-stack">
+          <NotificationsPage
+            role="student"
+            notifications={notifications}
+            enabled={notificationsEnabled}
+            onToggleEnabled={onToggleNotificationsEnabled}
+            onToggleRead={onToggleNotificationRead}
+          />
+          <Panel title="Flag appeals" subtitle="Respond to flagged project notifications">
+            <div className="stack-list">
+              {projects
+                .filter((project) => project.isFlagged)
+                .map((project) => (
+                  <article key={project.id} className="list-card">
+                    <div className="list-card-head">
+                      <div>
+                        <strong>{project.title}</strong>
+                        <span>{project.flagReason ?? 'Project flagged for review.'}</span>
+                      </div>
+                      <Badge tone="warn">Flagged</Badge>
+                    </div>
+                    <div className="composer compact-composer">
+                      <textarea
+                        rows={2}
+                        maxLength={180}
+                        value={appealDrafts[project.id] ?? ''}
+                        onChange={(event) =>
+                          setAppealDrafts((current) => ({
+                            ...current,
+                            [project.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Short appeal message"
+                      />
+                      <span className="subtle-copy">
+                        {(appealDrafts[project.id] ?? '').length}/180
+                      </span>
+                      <button
+                        type="button"
+                        className="primary-button"
+                        onClick={() =>
+                          sendProjectAppeal(project.id, appealDrafts[project.id] ?? '')
+                        }
+                      >
+                        Send Appeal
+                      </button>
+                    </div>
+                  </article>
+                ))}
+            </div>
+          </Panel>
+        </div>
       );
     default:
       return null;
