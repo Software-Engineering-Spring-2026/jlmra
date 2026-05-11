@@ -49,8 +49,30 @@ type StudentWorkspaceProps = {
   uploadThesisDraft: () => void;
   setFinalThesisDraft: (draftId: string) => void;
   sendProjectAppeal: (projectId: string, message: string) => void;
-  taskDrafts: Record<string, string>;
-  setTaskDrafts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  taskDrafts: Record<
+    string,
+    {
+      title: string;
+      description: string;
+      owner: string;
+      state: Project['tasks'][number]['state'];
+      due: string;
+    }
+  >;
+  setTaskDrafts: React.Dispatch<
+    React.SetStateAction<
+      Record<
+        string,
+        {
+          title: string;
+          description: string;
+          owner: string;
+          state: Project['tasks'][number]['state'];
+          due: string;
+        }
+      >
+    >
+  >;
   applyToInternship: (internshipId: string) => void;
   toggleInternshipFavorite: (internshipId: string) => void;
   conversations: Conversation[];
@@ -132,6 +154,14 @@ export function StudentWorkspace({
   const completedInternships = internships.filter(
     (internship) => internship.applicationStatus === 'Completed'
   );
+  const getTaskDraft = (projectId: string) =>
+    taskDrafts[projectId] ?? {
+      title: '',
+      description: '',
+      owner: '',
+      state: 'pending' as Project['tasks'][number]['state'],
+      due: '',
+    };
 
   switch (currentPage) {
     case 'dashboard':
@@ -204,6 +234,144 @@ export function StudentWorkspace({
                       </span>
                     </div>
                   ))}
+              </div>
+            </Panel>
+          </div>
+        </div>
+      );
+    case 'profile':
+      return (
+        <div className="page-stack">
+          <PageHeader
+            eyebrow="Student profile"
+            title={studentProfile.name}
+            description="Profile picture, biography, contact details, and skills."
+            action={
+              <button type="button" className="primary-button" onClick={saveStudentProfile}>
+                Save Profile
+              </button>
+            }
+          />
+          <div className="content-grid">
+            <Panel
+              title="Public identity"
+              subtitle="Shown with your portfolio and project submissions"
+              action={
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={uploadStudentProfilePicture}
+                >
+                  Upload Picture
+                </button>
+              }
+            >
+              <div className="form-grid">
+                <label>
+                  Full name
+                  <input
+                    value={studentProfile.name}
+                    onChange={(event) =>
+                      setStudentProfile((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    value={studentProfile.email}
+                    onChange={(event) =>
+                      setStudentProfile((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  Phone
+                  <input
+                    value={studentProfile.phone}
+                    onChange={(event) =>
+                      setStudentProfile((current) => ({
+                        ...current,
+                        phone: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  LinkedIn
+                  <input
+                    value={studentProfile.linkedin}
+                    onChange={(event) =>
+                      setStudentProfile((current) => ({
+                        ...current,
+                        linkedin: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+            </Panel>
+            <Panel title="Bio and skills" subtitle="Used by employers and instructors in Directory">
+              <div className="form-grid">
+                <label className="full-span">
+                  Bio
+                  <textarea
+                    rows={4}
+                    value={studentProfile.bio}
+                    onChange={(event) =>
+                      setStudentProfile((current) => ({
+                        ...current,
+                        bio: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  Major
+                  <input
+                    value={studentProfile.major}
+                    onChange={(event) =>
+                      setStudentProfile((current) => ({
+                        ...current,
+                        major: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  Graduation
+                  <input
+                    value={studentProfile.graduation}
+                    onChange={(event) =>
+                      setStudentProfile((current) => ({
+                        ...current,
+                        graduation: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="full-span">
+                  Skills
+                  <input
+                    value={studentProfile.skills.join(', ')}
+                    onChange={(event) =>
+                      setStudentProfile((current) => ({
+                        ...current,
+                        skills: event.target.value
+                          .split(',')
+                          .map((skill) => skill.trim())
+                          .filter(Boolean),
+                      }))
+                    }
+                    placeholder="React, TypeScript, UI Design"
+                  />
+                </label>
               </div>
             </Panel>
           </div>
@@ -303,7 +471,7 @@ export function StudentWorkspace({
                 </label>
               </div>
             </Panel>
-            <Panel title="Portfolio visibility and projects" subtitle="Whole profile visibility is separate from visible projects">
+            <Panel title="Portfolio controls" subtitle="Whole profile visibility is separate from project visibility and featured work">
               <div className="control-stack">
                 <div className="control-row">
                   <div>
@@ -327,22 +495,33 @@ export function StudentWorkspace({
                       : 'Public'}
                   </button>
                 </div>
-                <div className="simple-list">
+                <div className="portfolio-project-controls">
                   {projects.map((project) => (
-                    <button
-                      key={project.id}
-                      type="button"
-                      className={`list-button ${project.featured ? 'active' : ''}`}
-                      onClick={() => setFeaturedProjectById(project.id)}
-                    >
+                    <article key={project.id} className="portfolio-project-row">
                       <div>
                         <strong>{project.title}</strong>
                         <span>
-                          {project.visibility} on portfolio · {project.status}
+                          {project.visibility} · {project.status}
                         </span>
                       </div>
-                      {project.featured ? <Badge tone="accent">Featured</Badge> : null}
-                    </button>
+                      <div className="button-row">
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => toggleProjectVisibility(project.id)}
+                        >
+                          Make {project.visibility === 'Public' ? 'Private' : 'Public'}
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost-button favorite-button"
+                          onClick={() => setFeaturedProjectById(project.id)}
+                        >
+                          <Icon name="star" />
+                          {project.featured ? 'Featured' : 'Make Featured'}
+                        </button>
+                      </div>
+                    </article>
                   ))}
                 </div>
               </div>
@@ -488,36 +667,40 @@ export function StudentWorkspace({
                       </div>
                     </div>
                     {project.isFlagged ? (
-                      <div className="notice-banner top-space">
-                        Flag reason: {project.flagReason ?? 'Project flagged for review.'}
-                      </div>
-                    ) : null}
-                    {project.isFlagged ? (
-                      <div className="composer">
-                        <textarea
-                          rows={3}
-                          value={appealDrafts[project.id] ?? ''}
-                          onChange={(event) =>
-                            setAppealDrafts((current) => ({
-                              ...current,
-                              [project.id]: event.target.value,
-                            }))
-                          }
-                          placeholder="Explain why this project should be unflagged"
-                        />
-                        <button
-                          type="button"
-                          className="primary-button"
-                          onClick={() =>
-                            sendProjectAppeal(project.id, appealDrafts[project.id] ?? '')
-                          }
-                        >
-                          Send Appeal
-                        </button>
-                      </div>
+                      <>
+                        <div className="notice-banner top-space">
+                          Flag reason: {project.flagReason ?? 'Project flagged for review.'}
+                        </div>
+                        <div className="composer compact-composer">
+                          <textarea
+                            rows={2}
+                            maxLength={180}
+                            value={appealDrafts[project.id] ?? ''}
+                            onChange={(event) =>
+                              setAppealDrafts((current) => ({
+                                ...current,
+                                [project.id]: event.target.value,
+                              }))
+                            }
+                            placeholder="Short appeal message"
+                          />
+                          <span className="subtle-copy">
+                            {(appealDrafts[project.id] ?? '').length}/180
+                          </span>
+                          <button
+                            type="button"
+                            className="primary-button"
+                            onClick={() =>
+                              sendProjectAppeal(project.id, appealDrafts[project.id] ?? '')
+                            }
+                          >
+                            Send Appeal
+                          </button>
+                        </div>
+                      </>
                     ) : null}
                   </Panel>
-                  <Panel title="Tasks" subtitle="Ordered list for the project owner">
+                  <Panel title="Tasks" subtitle="Create, edit, delete, assign, and track deadlines">
                     <div className="simple-list">
                       {project.tasks.map((task) => (
                         <article key={task.id} className="list-card">
@@ -603,14 +786,73 @@ export function StudentWorkspace({
                     </div>
                     <div className="task-composer">
                       <input
-                        value={taskDrafts[project.id] ?? ''}
+                        value={getTaskDraft(project.id).title}
                         onChange={(event) =>
                           setTaskDrafts((current) => ({
                             ...current,
-                            [project.id]: event.target.value,
+                            [project.id]: {
+                              ...getTaskDraft(project.id),
+                              title: event.target.value,
+                            },
                           }))
                         }
-                        placeholder="Add a new task"
+                        placeholder="Task title"
+                      />
+                      <input
+                        value={getTaskDraft(project.id).description}
+                        onChange={(event) =>
+                          setTaskDrafts((current) => ({
+                            ...current,
+                            [project.id]: {
+                              ...getTaskDraft(project.id),
+                              description: event.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Short description"
+                      />
+                      <input
+                        value={getTaskDraft(project.id).owner}
+                        onChange={(event) =>
+                          setTaskDrafts((current) => ({
+                            ...current,
+                            [project.id]: {
+                              ...getTaskDraft(project.id),
+                              owner: event.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Assigned collaborator"
+                      />
+                      <select
+                        value={getTaskDraft(project.id).state}
+                        onChange={(event) =>
+                          setTaskDrafts((current) => ({
+                            ...current,
+                            [project.id]: {
+                              ...getTaskDraft(project.id),
+                              state: event.target
+                                .value as Project['tasks'][number]['state'],
+                            },
+                          }))
+                        }
+                      >
+                        <option value="pending">pending</option>
+                        <option value="postponed">post-poned</option>
+                        <option value="completed">completed</option>
+                      </select>
+                      <input
+                        value={getTaskDraft(project.id).due}
+                        onChange={(event) =>
+                          setTaskDrafts((current) => ({
+                            ...current,
+                            [project.id]: {
+                              ...getTaskDraft(project.id),
+                              due: event.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Deadline"
                       />
                       <button
                         type="button"

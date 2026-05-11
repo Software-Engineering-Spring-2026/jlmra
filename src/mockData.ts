@@ -273,7 +273,8 @@ export const initialProjects: Project[] = [
     demoVideoUrl: 'https://youtube.com/watch?v=demo1',
     reportUrl: '',
     summary: 'Internship discovery and project collaboration portal.',
-    isFlagged: false,
+    isFlagged: true,
+    flagReason: 'Possible uncredited asset detected in the project demo.',
     rating: 4.8,
     visibility: 'Public',
     featured: true,
@@ -777,6 +778,15 @@ export const initialAppeals: Appeal[] = [
 ];
 
 export const initialNotifications: NotificationItem[] = [
+  {
+    id: 'note-0',
+    title: 'Project flagged',
+    message: 'Career Compass was flagged: Possible uncredited asset detected in the project demo.',
+    time: 'Just now',
+    audience: ['student'],
+    read: false,
+    tone: 'warn',
+  },
   {
     id: 'note-1',
     title: 'Course instructor invitation sent',

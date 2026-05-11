@@ -234,6 +234,16 @@ export function DirectoryPage({
         : [...current, portfolioId]
     );
   };
+  const resetFilters = () => {
+    setSearchTerm('');
+    setCourseFilter('All');
+    setInstructorFilter('All');
+    setProjectDateFilter('All');
+    setPortfolioMajor('All');
+    setPortfolioSkill('All');
+    setPortfolioSort('projects');
+    setProjectSort('rating');
+  };
 
   return (
     <div className="page-stack directory-page">
@@ -266,83 +276,98 @@ export function DirectoryPage({
               placeholder="Search by title, email, instructor, course, skill"
             />
           </label>
-          <label>
-            Course
-            <select
-              value={courseFilter}
-              onChange={(event) => setCourseFilter(event.target.value)}
-            >
-              {projectCourseOptions.map((course) => (
-                <option key={course}>{course}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Instructor
-            <select
-              value={instructorFilter}
-              onChange={(event) => setInstructorFilter(event.target.value)}
-            >
-              {projectInstructorOptions.map((instructor) => (
-                <option key={instructor}>{instructor}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Creation date
-            <select
-              value={projectDateFilter}
-              onChange={(event) => setProjectDateFilter(event.target.value)}
-            >
-              {projectDateOptions.map((date) => (
-                <option key={date}>{date}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Project sort
-            <select
-              value={projectSort}
-              onChange={(event) => setProjectSort(event.target.value as 'rating' | 'date')}
-            >
-              <option value="rating">Rating</option>
-              <option value="date">Creation date</option>
-            </select>
-          </label>
-          <label>
-            Major
-            <select
-              value={portfolioMajor}
-              onChange={(event) => setPortfolioMajor(event.target.value)}
-            >
-              {portfolioMajorOptions.map((major) => (
-                <option key={major}>{major}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Skill
-            <select
-              value={portfolioSkill}
-              onChange={(event) => setPortfolioSkill(event.target.value)}
-            >
-              {portfolioSkillOptions.map((skill) => (
-                <option key={skill}>{skill}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Portfolio sort
-            <select
-              value={portfolioSort}
-              onChange={(event) =>
-                setPortfolioSort(event.target.value as 'projects' | 'rating')
-              }
-            >
-              <option value="projects">Number of projects</option>
-              <option value="rating">Rating</option>
-            </select>
-          </label>
+          {activeTab === 'projects' || activeTab === 'instructors' ? (
+            <label>
+              Course
+              <select
+                value={courseFilter}
+                onChange={(event) => setCourseFilter(event.target.value)}
+              >
+                {projectCourseOptions.map((course) => (
+                  <option key={course}>{course}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {activeTab === 'projects' ? (
+            <>
+              <label>
+                Course instructor
+                <select
+                  value={instructorFilter}
+                  onChange={(event) => setInstructorFilter(event.target.value)}
+                >
+                  {projectInstructorOptions.map((instructor) => (
+                    <option key={instructor}>{instructor}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Created
+                <select
+                  value={projectDateFilter}
+                  onChange={(event) => setProjectDateFilter(event.target.value)}
+                >
+                  {projectDateOptions.map((date) => (
+                    <option key={date}>{date}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Sort projects
+                <select
+                  value={projectSort}
+                  onChange={(event) =>
+                    setProjectSort(event.target.value as 'rating' | 'date')
+                  }
+                >
+                  <option value="rating">Rating</option>
+                  <option value="date">Creation date</option>
+                </select>
+              </label>
+            </>
+          ) : null}
+          {activeTab === 'portfolios' ? (
+            <>
+              <label>
+                Major
+                <select
+                  value={portfolioMajor}
+                  onChange={(event) => setPortfolioMajor(event.target.value)}
+                >
+                  {portfolioMajorOptions.map((major) => (
+                    <option key={major}>{major}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Skill
+                <select
+                  value={portfolioSkill}
+                  onChange={(event) => setPortfolioSkill(event.target.value)}
+                >
+                  {portfolioSkillOptions.map((skill) => (
+                    <option key={skill}>{skill}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Sort portfolios
+                <select
+                  value={portfolioSort}
+                  onChange={(event) =>
+                    setPortfolioSort(event.target.value as 'projects' | 'rating')
+                  }
+                >
+                  <option value="projects">Number of projects</option>
+                  <option value="rating">Rating</option>
+                </select>
+              </label>
+            </>
+          ) : null}
+          <button type="button" className="ghost-button" onClick={resetFilters}>
+            Clear Filters
+          </button>
         </div>
       </section>
 

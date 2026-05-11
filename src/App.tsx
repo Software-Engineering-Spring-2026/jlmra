@@ -151,7 +151,18 @@ function App() {
     'I would love to contribute to a team building a clear, useful student-facing experience.'
   );
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, string>>({});
-  const [taskDrafts, setTaskDrafts] = useState<Record<string, string>>({});
+  const [taskDrafts, setTaskDrafts] = useState<
+    Record<
+      string,
+      {
+        title: string;
+        description: string;
+        owner: string;
+        state: ProjectTask['state'];
+        due: string;
+      }
+    >
+  >({});
   const [internshipDraft, setInternshipDraft] =
     useState<InternshipDraft>(emptyInternshipDraft);
   const [editingInternshipId, setEditingInternshipId] = useState<string | null>(
@@ -396,7 +407,14 @@ function App() {
   };
 
   const addTaskToProject = (projectId: string) => {
-    const nextTaskTitle = taskDrafts[projectId]?.trim();
+    const draft = taskDrafts[projectId] ?? {
+      title: '',
+      description: '',
+      owner: '',
+      state: 'pending' as ProjectTask['state'],
+      due: '',
+    };
+    const nextTaskTitle = draft.title.trim();
 
     if (!nextTaskTitle) {
       return;
@@ -412,10 +430,10 @@ function App() {
                 {
                   id: createId('task'),
                   title: nextTaskTitle,
-                  description: '',
-                  owner: studentProfile.name.split(' ')[0],
-                  state: 'pending',
-                  due: 'This week',
+                  description: draft.description.trim() || 'Short task description',
+                  owner: draft.owner.trim() || studentProfile.name.split(' ')[0],
+                  state: draft.state,
+                  due: draft.due.trim() || 'This week',
                   order: project.tasks.length + 1,
                 },
               ],
@@ -425,7 +443,13 @@ function App() {
     );
     setTaskDrafts((current) => ({
       ...current,
-      [projectId]: '',
+      [projectId]: {
+        title: '',
+        description: '',
+        owner: '',
+        state: 'pending',
+        due: '',
+      },
     }));
     addNotification({
       title: 'New task added',
@@ -976,19 +1000,6 @@ function App() {
       )
     );
 
-    setAppeals((current) => [
-      {
-        id: createId('appeal'),
-        projectTitle: targetProject.title,
-        raisedBy: studentProfile.name,
-        reason: 'Project flagged for a manual plagiarism check.',
-        studentMessage:
-          'This is original work by the team, and all reused references are cited.',
-        status: 'Pending Review',
-      },
-      ...current,
-    ]);
-
     addNotification({
       title: 'Project flagged',
       message: `${targetProject.title} was flagged: Project flagged for a manual plagiarism check.`,
@@ -1219,7 +1230,7 @@ function App() {
       return null;
     }
     const user = session;
-    if (currentPage === 'profile') {
+    if (currentPage === 'profile' && session.role === 'admin') {
       return (
         <div style={{ padding: '30px', maxWidth: '600px' }}>
         <h1 style={{ marginBottom: '20px' }}>My Profile</h1>
